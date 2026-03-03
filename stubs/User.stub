@@ -1,0 +1,20 @@
+<?php
+
+namespace Illuminate\Foundation\Auth;
+
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string $password
+ * @property string|null $phone
+ * @property string|null $address
+ * @property string $role
+ * @property bool $is_blocked
+ * @property \DateTime|null $email_verified_at
+ * @property \DateTime $created_at
+ * @property \DateTime $updated_at
+ */
+class User
+{
+}

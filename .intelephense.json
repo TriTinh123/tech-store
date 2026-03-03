@@ -1,0 +1,15 @@
+{
+    "analysisOptions": {
+        "enabled": true
+    },
+    "files": {
+        "exclude": [
+            "**/node_modules",
+            "**/vendor",
+            "**/.git",
+            "**/*.blade.php",
+            "resources/**",
+            "storage/**"
+        ]
+    }
+}
