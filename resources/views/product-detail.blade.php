@@ -144,7 +144,7 @@
             <div class="review-card">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <span class="fw-700">{{ $review->user_name ?? 'Hide danh' }}</span>
+                        <span class="fw-700">{{ $review->user_name ?? 'Anonymous' }}</span>
                         <div class="mt-1">
                             @for($i=0;$i<5;$i++)
                                 <i class="{{ $i<($review->rating??0)?'fas':'far' }} fa-star {{ $i<($review->rating??0)?'star-filled':'star-empty' }}"></i>

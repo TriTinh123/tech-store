@@ -60,7 +60,7 @@
                                 <div class="text-muted" style="font-size:12px">SKU: #{{ $item['product']->id }}</div>
                             </td>
                             <td class="text-center" style="color:var(--danger);font-weight:600">
-                                {{ number_format($item['product']->price, 0, ',', '.') }}₫
+                                ${{ number_format($item['product']->price, 2) }}
                             </td>
                             <td class="text-center">
                                 <form action="{{ route('cart.update', $item['product']->id) }}" method="POST" class="d-flex align-items-center justify-content-center gap-1">

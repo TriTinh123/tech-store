@@ -61,7 +61,8 @@
                                 <div class="text-muted" style="font-size:12px">SKU: #<?php echo e($item['product']->id); ?></div>
                             </td>
                             <td class="text-center" style="color:var(--danger);font-weight:600">
-                                <?php echo e(number_format($item['product']->price, 0, ',', '.')); ?>₫
+                                $<?php echo e(number_format($item['product']->price, 2)); ?>
+
                             </td>
                             <td class="text-center">
                                 <form action="<?php echo e(route('cart.update', $item['product']->id)); ?>" method="POST" class="d-flex align-items-center justify-content-center gap-1">

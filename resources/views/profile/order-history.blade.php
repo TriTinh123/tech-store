@@ -109,9 +109,9 @@
           @endif
         </div>
         @else
-        <div class="oh-eta delivered"><i class="fas fa-check-circle"></i> Giao {{ $order->updated_at->format('d/m/Y') }}</div>
+        <div class="oh-eta delivered"><i class="fas fa-check-circle"></i> Delivered {{ $order->updated_at->format('d/m/Y') }}</div>
         @endif
-        <div class="oh-total">₫{{ number_format($order->total_amount, 0, ',', '.') }}</div>
+        <div class="oh-total">${{ number_format($order->total_amount, 2) }}</div>
         <a href="{{ route('profile.order-detail', $order->id) }}" class="oh-btn-detail" style="background:{{ $sc['color'] }}">
           <i class="fas fa-map-marker-alt"></i> Track Order
         </a>

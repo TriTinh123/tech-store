@@ -143,7 +143,7 @@
                 </div>
                 <div class="rf-row">
                     <label><input type="checkbox" name="remember" {{ old('remember') ? 'checked' : '' }}> Remember me</label>
-                    <a href="#">Forgot password?</a>
+                    <a href="{{ route('password.forgot') }}">Forgot password?</a>
                 </div>
                 <button type="submit" class="btn-primary"><i class="fas fa-sign-in-alt"></i> Sign In</button>
                 <div class="divider">or</div>

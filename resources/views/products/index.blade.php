@@ -64,7 +64,7 @@
                     <li>
                         <a href="{{ route('products.index', array_merge(request()->query(), ['sort' => 'rating'])) }}" 
                            style="display: block; padding: 12px 15px; text-decoration: none; color: #333; @if(request('sort') == 'rating') background: #e8f8f5; color: #00b894; font-weight: 600; @endif">
-                            Rating cao
+                            Top Rated
                         </a>
                     </li>
                 </ul>

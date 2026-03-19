@@ -109,10 +109,7 @@
                 <div class="text-center mb-3">
                     <div class="amount-badge mx-auto">
                         <i class="fas fa-coins" style="color:#92400e"></i>
-                        <span>{{ number_format($paymentDetails['amount']) }}&nbsp;₫</span>
-                    </div>
-                </div>
-                <div class="ref-box">
+                        <span>${{ number_format($paymentDetails['amount'], 2) }}</span>
                     <div style="font-size:12px;opacity:.75;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">
                         Transfer Description (must match exactly)
                     </div>
@@ -184,7 +181,7 @@
                 <div class="text-center mb-3">
                     <div class="amount-badge mx-auto">
                         <i class="fas fa-coins" style="color:#92400e"></i>
-                        <span>{{ number_format($paymentDetails['amount']) }}&nbsp;₫</span>
+                        <span>${{ number_format($paymentDetails['amount'], 2) }}</span>
                     </div>
                 </div>
                 <div class="ref-box mb-3" style="background:linear-gradient(135deg,#c2185b,#9c27b0)">
@@ -253,7 +250,7 @@
                 <div class="text-center mb-3">
                     <div class="amount-badge mx-auto">
                         <i class="fas fa-coins" style="color:#92400e"></i>
-                        <span>{{ number_format($paymentDetails['amount']) }}&nbsp;₫</span>
+                        <span>${{ number_format($paymentDetails['amount'], 2) }}</span>
                     </div>
                 </div>
                 <div class="ref-box mb-3" style="background:linear-gradient(135deg,#0369a1,#06b6d4)">
@@ -312,7 +309,7 @@
                         <i class="fas fa-truck" style="color:#fff;font-size:32px"></i>
                     </div>
                     <h5 class="fw-bold">Your order is confirmed!</h5>
-                    <p class="text-muted" style="font-size:14px">You will pay <strong>{{ number_format($paymentDetails['amount'] ?? $order->total_amount) }}&nbsp;₫</strong> in cash when the delivery arrives.</p>
+                    <p class="text-muted" style="font-size:14px">You will pay <strong>${{ number_format($paymentDetails['amount'] ?? $order->total_amount, 2) }}</strong> in cash when the delivery arrives.</p>
                 </div>
                 <div class="p-3 rounded-3" style="background:#f0fdf4;border:1.5px solid #bbf7d0;font-size:13px;color:#14532d">
                     <i class="fas fa-lightbulb me-2 text-success"></i>
@@ -395,7 +392,7 @@
                         <span class="text-muted">&times;{{ $oi->quantity }}</span>
                     </span>
                     <span class="fw-bold" style="color:#e53e3e;font-size:14px">
-                        {{ number_format($oi->subtotal) }}&nbsp;₫
+                        ${{ number_format($oi->subtotal, 2) }}
                     </span>
                 </div>
                 @endforeach
@@ -403,12 +400,12 @@
                 @if($order->coupon_discount ?? 0)
                 <div class="info-row">
                     <span class="text-muted">Discount</span>
-                    <span style="color:#16a34a;font-weight:600">-{{ number_format($order->coupon_discount) }}&nbsp;₫</span>
+                    <span style="color:#16a34a;font-weight:600">-${{ number_format($order->coupon_discount, 2) }}</span>
                 </div>
                 @endif
                 <div class="d-flex justify-content-between mt-3 pt-3" style="border-top:2.5px solid var(--border);font-size:20px;font-weight:800;color:#e53e3e">
                     <span>Total</span>
-                    <span>{{ number_format($order->total_amount ?? 0) }}&nbsp;₫</span>
+                    <span>${{ number_format($order->total_amount ?? 0, 2) }}</span>
                 </div>
             </div>
         </div>

@@ -165,7 +165,7 @@
                     <span class="info-val">{{ ucfirst(str_replace('_',' ',$order->payment_method)) }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Status TT</span>
+                    <span class="info-label">Payment Status</span>
                     <span class="info-val">
                         @if($order->payment_status === 'completed' || $order->payment_status === 'paid')
                             <span style="background:#d1fae5;color:#065f46;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700"><i class="fas fa-check me-1"></i>Paid</span>

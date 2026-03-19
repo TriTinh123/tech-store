@@ -185,17 +185,17 @@
           @endif
           <div class="od-item-info">
             <div class="od-item-name">{{ $item->product->name ?? 'Products' }}</div>
-            <div class="od-item-meta">x{{ $item->quantity }} • ₫{{ number_format($item->price, 0, ',', '.') }}</div>
+            <div class="od-item-meta">x{{ $item->quantity }} • ${{ number_format($item->price, 2) }}</div>
           </div>
-          <div class="od-item-total">₫{{ number_format($item->quantity * $item->price, 0, ',', '.') }}</div>
+          <div class="od-item-total">${{ number_format($item->quantity * $item->price, 2) }}</div>
         </div>
         @endforeach
         <div class="od-item-summary">
           @if($order->discount_amount > 0)
-          <div class="od-summary-row"><span>Savings</span><span style="color:#00b894">-₫{{ number_format($order->discount_amount, 0, ',', '.') }}</span></div>
+          <div class="od-summary-row"><span>Savings</span><span style="color:#00b894">-${{ number_format($order->discount_amount, 2) }}</span></div>
           @endif
           <div class="od-summary-row"><span>Shipping</span><span style="color:#00b894">Free</span></div>
-          <div class="od-summary-row total-row"><span>Total</span><span>₫{{ number_format($order->total_amount, 0, ',', '.') }}</span></div>
+          <div class="od-summary-row total-row"><span>Total</span><span>${{ number_format($order->total_amount, 2) }}</span></div>
         </div>
       </div>
 
