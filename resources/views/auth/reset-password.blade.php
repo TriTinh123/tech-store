@@ -7,12 +7,12 @@
             <div class="card shadow-lg">
                 <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                     <h3 class="mb-0">
-                        <i class="fas fa-lock-open"></i> Đặt Lại Mật Khẩu
+                        <i class="fas fa-lock-open"></i> Reset Password
                     </h3>
                 </div>
                 <div class="card-body">
                     <p class="text-muted mb-4">
-                        Nhập mật khẩu mới của bạn để hoàn tất quy trình đặt lại.
+                        Enter your new password to complete the reset process.
                     </p>
 
                     @if(session('success'))
@@ -31,7 +31,7 @@
 
                     @if($errors->any())
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle"></i> Kiểm tra lại các trường:
+                            <i class="fas fa-exclamation-circle"></i> Please check the following fields:
                             <ul class="mb-0 mt-2">
                                 @foreach($errors->all() as $error)
                                     <li>{{ $error }}</li>
@@ -56,26 +56,26 @@
                                    id="email" 
                                    value="{{ request()->route('email') }}" 
                                    disabled>
-                            <small class="text-muted">Email này không thể thay đổi</small>
+                            <small class="text-muted">This email cannot be changed</small>
                         </div>
 
                         <div class="form-group mb-4">
                             <label for="password" class="form-label">
-                                <i class="fas fa-lock-open"></i> Mật Khẩu Mới
+                                <i class="fas fa-lock-open"></i> New Password
                             </label>
                             <div class="input-group">
                                 <input type="password" 
                                        class="form-control form-control-lg @error('password') is-invalid @enderror" 
                                        id="password" 
                                        name="password" 
-                                       placeholder="Nhập mật khẩu mới"
+                                       placeholder="Enter new password"
                                        required>
                                 <button class="btn btn-outline-secondary" type="button" id="togglePassword">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             </div>
                             <small class="text-muted d-block mt-2">
-                                Mật khẩu phải có ít nhất 6 ký tự
+                                Password must be at least 6 characters
                             </small>
                             @error('password')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -84,14 +84,14 @@
 
                         <div class="form-group mb-4">
                             <label for="password_confirmation" class="form-label">
-                                <i class="fas fa-lock-open"></i> Xác Nhận Mật Khẩu
+                                <i class="fas fa-lock-open"></i> Confirm Password
                             </label>
                             <div class="input-group">
                                 <input type="password" 
                                        class="form-control form-control-lg @error('password_confirmation') is-invalid @enderror" 
                                        id="password_confirmation" 
                                        name="password_confirmation" 
-                                       placeholder="Xác nhận mật khẩu"
+                                       placeholder="Confirm password"
                                        required>
                                 <button class="btn btn-outline-secondary" type="button" id="toggleConfirm">
                                     <i class="fas fa-eye"></i>
@@ -104,7 +104,7 @@
 
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-check"></i> Đặt Lại Mật Khẩu
+                                <i class="fas fa-check"></i> Reset Password
                             </button>
                         </div>
 
@@ -112,8 +112,8 @@
 
                         <div class="text-center">
                             <p class="mb-0">
-                                Quay lại? 
-                                <a href="{{ route('login') }}" class="btn btn-link p-0">Đăng Nhập</a>
+                                Back? 
+                                <a href="{{ route('login') }}" class="btn btn-link p-0">Sign In</a>
                             </p>
                         </div>
                     </form>
@@ -122,7 +122,7 @@
 
             <div class="alert alert-warning mt-4" role="alert">
                 <i class="fas fa-exclamation-triangle"></i> 
-                <strong>Lưu Ý:</strong> Liên kết này sẽ hết hạn sau 30 phút. Vui lòng hoàn tất quy trình soonest.
+                <strong>Note:</strong> This link expires in 30 minutes. Please complete the process promptly.
             </div>
         </div>
     </div>

@@ -2,68 +2,73 @@
 
 @section('content')
 <div class="container mt-5">
-    <div class="row">
-        <div class="col-md-8 mx-auto">
-            <div class="card shadow-lg">
-                <div class="card-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
-                    <h3 class="mb-0">
-                        <i class="fas fa-undo"></i> Yêu Cầu Hoàn Trả Hàng
-                    </h3>
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card shadow-sm" style="border-radius:12px;overflow:hidden;border:none">
+                <div class="card-header" style="background:linear-gradient(135deg,#667eea,#764ba2);padding:18px 24px;border:none">
+                    <h5 class="mb-0" style="color:#fff"><i class="fas fa-undo-alt me-2"></i>Return Requests / Refunds</h5>
+                    <p class="mb-0 mt-1" style="color:rgba(255,255,255,.7);font-size:13px">Order #{{ $order->order_number }}</p>
                 </div>
-                <div class="card-body">
-                    <form action="{{ route('returns.store', $order->id) }}" method="POST">
+                <div class="card-body p-4">
+
+                    @if($errors->any())
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+                    </div>
+                    @endif
+
+                    {{-- Order summary --}}
+                    <div style="background:#f8fafc;border-radius:8px;padding:14px 16px;margin-bottom:20px;border:1px solid #e2e8f0">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span style="font-size:12px;color:#6b7280">Order ID</span>
+                            <strong style="font-size:13px">#{{ $order->order_number }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span style="font-size:12px;color:#6b7280">Total</span>
+                            <strong style="font-size:13px;color:#e74c3c">${{ number_format($order->total_amount, 2) }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span style="font-size:12px;color:#6b7280">Order Date</span>
+                            <span style="font-size:12px">{{ $order->created_at?->format('d/m/Y') }}</span>
+                        </div>
+                    </div>
+
+                    <form action="{{ route('orders.return.store', $order->id) }}" method="POST">
                         @csrf
-
-                        <div class="form-group mb-3">
-                            <label for="order_item_id" class="form-label">Sản phẩm cần hoàn trả *</label>
-                            <select id="order_item_id" name="order_item_id" class="form-control @error('order_item_id') is-invalid @enderror" required>
-                                <option value="">-- Chọn sản phẩm --</option>
-                                @foreach($items as $item)
-                                    <option value="{{ $item->id }}">
-                                        {{ $item->product_name }} - ₫{{ number_format($item->subtotal, 0, ',', '.') }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('order_item_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold" style="font-size:13px">Request type <span style="color:#ef4444">*</span></label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="return_type" id="type_refund" value="refund" checked>
+                                    <label class="form-check-label" for="type_refund" style="font-size:13px">💰 Refund</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="return_type" id="type_exchange" value="exchange">
+                                    <label class="form-check-label" for="type_exchange" style="font-size:13px">🔄 Exchange</label>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="form-group mb-3">
-                            <label for="reason" class="form-label">Lý do hoàn trả *</label>
-                            <select id="reason" name="reason" class="form-control @error('reason') is-invalid @enderror" required>
-                                <option value="">-- Chọn lý do --</option>
-                                <option value="defective">Sản phẩm bị lỗi/hư hỏng</option>
-                                <option value="wrong_item">Gửi nhầm sản phẩm</option>
-                                <option value="not_as_described">Sản phẩm không đúng mô tả</option>
-                                <option value="changed_mind">Tôi thay đổi ý định</option>
-                                <option value="other">Lý do khác</option>
-                            </select>
-                            @error('reason')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold" style="font-size:13px">Return reason <span style="color:#ef4444">*</span></label>
+                            <textarea name="reason" class="form-control" rows="5" required minlength="10" maxlength="1000"
+                                placeholder="Detailed description your reason for the return or refund (at least 10 characters)..."
+                                style="resize:none;font-size:13px">{{ old('reason') }}</textarea>
+                            <div style="font-size:11px;color:#9ca3af;margin-top:4px">Minimum 10 characters. The more detail you provide, the faster we can process your request.</div>
                         </div>
 
-                        <div class="form-group mb-3">
-                            <label for="description" class="form-label">Mô tả chi tiết *</label>
-                            <textarea id="description" name="description" class="form-control @error('description') is-invalid @enderror" 
-                                      rows="5" placeholder="Vui lòng mô tả chi tiết lý do hoàn trả..." required></textarea>
-                            @error('description')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> <strong>Lưu ý:</strong> Sau khi gửi yêu cầu, chúng tôi sẽ xem xét trong vòng 24-48 giờ và liên hệ bạn.
+                        <div style="background:#fffbeb;border:1px solid #fed7aa;border-radius:8px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:#92400e">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <strong>Note:</strong> We accept return requests within <strong>7 days</strong> of receiving the item. Products must be unused and in original condition.
                         </div>
 
                         <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-paper-plane"></i> Gửi yêu cầu hoàn trả
-                            </button>
-                            <a href="{{ route('profile.order-detail', $order->id) }}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i> Quay lại
+                            <a href="{{ route('orders.show', $order->id) }}" class="btn btn-outline-secondary flex-fill">
+                                <i class="fas fa-arrow-left me-1"></i> Back
                             </a>
+                            <button type="submit" class="btn btn-primary flex-fill">
+                                <i class="fas fa-paper-plane me-1"></i> Submit request
+                            </button>
                         </div>
                     </form>
                 </div>

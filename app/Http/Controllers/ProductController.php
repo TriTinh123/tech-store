@@ -18,7 +18,7 @@ class ProductController extends Controller
 
         // Search by name or description
         if ($request->has('search') && $request->search) {
-            $searchTerm = $request->get('search');
+            $searchTerm = $request->input('search');
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('name', 'like', '%'.$searchTerm.'%')
                     ->orWhere('description', 'like', '%'.$searchTerm.'%');
@@ -34,7 +34,7 @@ class ProductController extends Controller
         }
 
         // Sort options
-        $sort = $request->get('sort', 'latest');
+        $sort = $request->input('sort', 'latest');
         switch ($sort) {
             case 'price-low':
                 $query->orderBy('price', 'asc');
@@ -51,9 +51,9 @@ class ProductController extends Controller
                 break;
         }
 
-        $products = $query->paginate(12);
+        $products = $query->paginate(12)->withQueryString();
         $categories = Category::all();
-        $searchQuery = $request->get('search', '');
+        $searchQuery = $request->input('search', '');
 
         return view('products.index', compact('products', 'categories', 'searchQuery'));
     }
@@ -67,7 +67,22 @@ class ProductController extends Controller
             ->limit(4)
             ->get();
 
-        return view('product-detail', compact('product', 'relatedProducts'));
+        // Check if this product is in today's flash sale
+        $allIds = Product::pluck('id')->toArray();
+        $daySeed = (int) date('Ymd');
+        mt_srand($daySeed);
+        shuffle($allIds);
+        $flashSaleIds = array_slice($allIds, 0, 10);
+
+        $flashSalePrice = null;
+        $flashSaleDiscount = null;
+        if (in_array($product->id, $flashSaleIds)) {
+            mt_srand($daySeed + $product->id);
+            $flashSaleDiscount = mt_rand(10, 35);
+            $flashSalePrice    = round($product->price * (1 - $flashSaleDiscount / 100), 2);
+        }
+
+        return view('product-detail', compact('product', 'relatedProducts', 'flashSalePrice', 'flashSaleDiscount'));
     }
 
     /**
@@ -101,6 +116,6 @@ class ProductController extends Controller
             $product->save();
         }
 
-        return redirect()->route('product.show', $product->id)->with('success', 'Đánh giá của bạn đã được gửi thành công!');
+        return redirect()->route('product.show', $product->id)->with('success', 'Your review has been submitted successfully!');
     }
 }

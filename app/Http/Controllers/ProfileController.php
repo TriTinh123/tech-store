@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
-use App\Models\SecurityAlert;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -15,7 +14,7 @@ class ProfileController extends Controller
         $this->middleware('auth');
     }
 
-    // Xem trang tài khoản
+    // View account page
     public function show()
     {
         $user = auth()->user();
@@ -23,7 +22,7 @@ class ProfileController extends Controller
         return view('profile.show', compact('user'));
     }
 
-    // Sửa thông tin cá nhân
+    // Edit personal information
     public function edit()
     {
         $user = auth()->user();
@@ -44,10 +43,10 @@ class ProfileController extends Controller
 
         $user->update($validated);
 
-        return redirect()->route('profile.show')->with('success', 'Thông tin đã cập nhật!');
+        return redirect()->route('profile.show')->with('success', 'Profile updated!');
     }
 
-    // Trang đổi mật khẩu
+    // Change password page
     public function editPassword()
     {
         return view('profile.change-password');
@@ -64,10 +63,26 @@ class ProfileController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        return redirect()->route('profile.show')->with('success', 'Mật khẩu đã được đổi!');
+        return redirect()->route('profile.show')->with('success', 'Password changed!');
     }
 
-    // Xem lịch sử đơn hàng
+    // Update security question
+    public function updateSecurityQuestion(Request $request)
+    {
+        $request->validate([
+            'security_question' => 'required|string|max:255',
+            'security_answer'   => 'required|string|min:2|max:255',
+        ]);
+
+        auth()->user()->update([
+            'security_question' => $request->security_question,
+            'security_answer'   => Hash::make(strtolower(trim($request->security_answer))),
+        ]);
+
+        return redirect()->route('profile.show')->with('success', 'Security question updated successfully!');
+    }
+
+    // View order history
     public function orderHistory()
     {
         $orders = Order::where('user_id', auth()->id())
@@ -77,7 +92,7 @@ class ProfileController extends Controller
         return view('profile.order-history', compact('orders'));
     }
 
-    // Xem chi tiết đơn hàng
+    // View order details
     public function orderDetail($id)
     {
         $order = Order::findOrFail($id);
@@ -89,157 +104,5 @@ class ProfileController extends Controller
         $items = $order->items()->with('product')->get();
 
         return view('profile.order-detail', compact('order', 'items'));
-    }
-
-    /**
-     * Show security alerts for current user
-     */
-    public function alertsIndex(Request $request)
-    {
-        $user = auth()->user();
-        $query = SecurityAlert::where('user_id', $user->id);
-
-        // Filter by severity
-        if ($request->filled('severity')) {
-            $query->where('severity', $request->severity);
-        }
-
-        // Filter by read status
-        if ($request->filled('status')) {
-            if ($request->status === 'unread') {
-                $query->whereNull('read_at');
-            } elseif ($request->status === 'read') {
-                $query->whereNotNull('read_at');
-            }
-        }
-
-        // Filter by alert type
-        if ($request->filled('type')) {
-            $query->where('alert_type', $request->type);
-        }
-
-        $alerts = $query->orderBy('created_at', 'desc')->paginate(15);
-
-        // Calculate statistics
-        $allAlerts = $user->securityAlerts();
-        $stats = [
-            'total_count' => $allAlerts->count(),
-            'unread_count' => $allAlerts->unread()->count(),
-            'critical_count' => $allAlerts->bySeverity('critical')->count(),
-            'locked_count' => $allAlerts->where('alert_type', 'account_locked')->count(),
-        ];
-
-        return view('profile.alerts', compact('alerts', 'stats'));
-    }
-
-    /**
-     * Get a specific alert via AJAX
-     */
-    public function alertsShow($id)
-    {
-        $alert = SecurityAlert::findOrFail($id);
-
-        // Check if user owns this alert
-        if ($alert->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized');
-        }
-
-        // Mark as read
-        if (! $alert->isRead()) {
-            $alert->markAsRead();
-        }
-
-        return response()->json([
-            'id' => $alert->id,
-            'message' => $alert->message,
-            'alertTypeLabel' => $alert->getAlertTypeLabel(),
-            'severity' => $alert->severity,
-            'created_at' => $alert->created_at->format('H:i:s d/m/Y'),
-            'suspiciousLogin' => $alert->suspiciousLogin ? [
-                'ip_address' => $alert->suspiciousLogin->ip_address,
-                'city' => $alert->suspiciousLogin->city,
-                'country' => $alert->suspiciousLogin->country,
-                'device_type' => $alert->suspiciousLogin->device_type,
-                'browser' => $alert->suspiciousLogin->browser,
-            ] : null,
-        ]);
-    }
-
-    /**
-     * Confirm a suspicious login alert
-     */
-    public function alertsConfirm($id, Request $request)
-    {
-        $alert = SecurityAlert::findOrFail($id);
-
-        // Check if user owns this alert
-        if ($alert->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized');
-        }
-
-        // Check if there's a suspicious login associated
-        if ($alert->suspiciousLogin) {
-            $alert->confirmByUser();
-        }
-
-        // Redirect back with success message
-        return redirect()->route('profile.alerts.index')
-            ->with('success', 'Cảnh báo đã được xác nhận!');
-    }
-
-    /**
-     * Show sessions management page
-     */
-    public function sessionsIndex()
-    {
-        $user = auth()->user();
-        $sessions = $user->sessions()
-            ->orderBy('logged_in_at', 'desc')
-            ->paginate(10);
-
-        $stats = [
-            'active_sessions' => $user->sessions()->where('status', 'active')->count(),
-            'total_sessions' => $user->sessions()->count(),
-            'unique_ips' => $user->sessions()->where('status', 'active')->distinct('ip_address')->count(),
-        ];
-
-        return view('profile.sessions', compact('sessions', 'stats', 'user'));
-    }
-
-    /**
-     * Terminate a specific session
-     */
-    public function sessionTerminate($sessionId)
-    {
-        $user = auth()->user();
-        $session = \App\Models\UserSession::find($sessionId);
-
-        if (! $session || $session->user_id !== $user->id) {
-            abort(403, 'Unauthorized');
-        }
-
-        $session->terminate('user_revoked');
-
-        return redirect()->route('profile.sessions.index')
-            ->with('success', 'Phiên đã được kết thúc!');
-    }
-
-    /**
-     * Terminate all other sessions
-     */
-    public function sessionsTerminateOthers()
-    {
-        $user = auth()->user();
-        $count = \App\Models\UserSession::where('user_id', $user->id)
-            ->where('session_id', '!=', session()->getId())
-            ->where('status', 'active')
-            ->update([
-                'status' => 'terminated',
-                'logged_out_at' => now(),
-                'logout_reason' => 'user_terminated_others',
-            ]);
-
-        return redirect()->route('profile.sessions.index')
-            ->with('success', "Đã kết thúc {$count} phiên khác!");
     }
 }

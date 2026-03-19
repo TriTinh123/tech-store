@@ -1,128 +1,316 @@
-@extends('layouts.app')
+@extends('layouts.admin')
+@section('title', 'Order Details #' . ($order->order_number ?? $order->id))
 
-@section('content')
-<div class="container-fluid mt-4">
-    <h1 style="color: #667eea; font-weight: bold;">
-        <i class="fas fa-receipt"></i> Chi Tiết Đơn Hàng #{{ $order->id }}
-    </h1>
-
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    <div class="row mt-4">
-        <div class="col-lg-8">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                    <h5 class="mb-0">Thông Tin Giao Hàng</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>Tên:</strong> {{ $order->customer_name ?? 'Không có' }}</p>
-                            <p><strong>Email:</strong> {{ $order->customer_email ?? 'Không có' }}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>Điện thoại:</strong> {{ $order->customer_phone ?? 'Không có' }}</p>
-                            <p><strong>Địa chỉ:</strong> {{ $order->customer_address ?? 'Không có' }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card shadow-sm mb-4">
-                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                    <h5 class="mb-0">Sản Phẩm</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead style="background-color: #f8f9fa;">
-                                <tr>
-                                    <th>Sản Phẩm</th>
-                                    <th class="text-center">Số Lượng</th>
-                                    <th class="text-end">Giá</th>
-                                    <th class="text-end">Tổng</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($order->items as $item)
-                                    <tr>
-                                        <td>{{ $item->product->name ?? 'Sản phẩm' }}</td>
-                                        <td class="text-center">{{ $item->quantity }}</td>
-                                        <td class="text-end">₫{{ number_format($item->price, 0, ',', '.') }}</td>
-                                        <td class="text-end"><strong>₫{{ number_format($item->quantity * $item->price, 0, ',', '.') }}</strong></td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                    <h5 class="mb-0">Trạng Thái Đơn Hàng</h5>
-                </div>
-                <div class="card-body">
-                    <form action="{{ route('admin.orders.update', $order) }}" method="POST">
-                        @csrf
-                        @method('PUT')
-
-                        <div class="form-group mb-3">
-                            <label for="status" class="form-label">Cập Nhật Trạng Thái</label>
-                            <select class="form-select" id="status" name="status">
-                                <option value="pending" @if($order->status == 'pending') selected @endif>Chờ xử lý</option>
-                                <option value="confirmed" @if($order->status == 'confirmed') selected @endif>Xác nhận</option>
-                                <option value="shipped" @if($order->status == 'shipped') selected @endif>Đang giao</option>
-                                <option value="delivered" @if($order->status == 'delivered') selected @endif>Đã giao</option>
-                                <option value="cancelled" @if($order->status == 'cancelled') selected @endif>Hủy</option>
-                            </select>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-check"></i> Cập Nhật
-                        </button>
-                    </form>
-
-                    <hr>
-
-                    <div class="info-box">
-                        <p><strong>Ngày Đặt:</strong><br>{{ $order->created_at->format('d/m/Y H:i') }}</p>
-                        <p><strong>Tổng Cộng:</strong><br><span style="color: #48bb78; font-size: 1.3em; font-weight: bold;">₫{{ number_format($order->total_amount, 0, ',', '.') }}</span></p>
-                        <p><strong>Khách Hàng:</strong><br>{{ $order->user->name ?? 'Guest' }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="mt-4">
-        <a href="{{ route('admin.orders') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Quay Lại Danh Sách
-        </a>
-    </div>
-</div>
+@section('body-content')
+@php
+    $statusCfg = [
+        'pending'   => ['label'=>'Pending confirmation',    'color'=>'#f39c12','bg'=>'#fff9ec','icon'=>'fa-clock',        'pct'=>8],
+        'confirmed' => ['label'=>'Confirmed',     'color'=>'#0984e3','bg'=>'#e8f4fd','icon'=>'fa-check',        'pct'=>35],
+        'shipped'   => ['label'=>'Shipping',  'color'=>'#6c5ce7','bg'=>'#f0eeff','icon'=>'fa-truck',        'pct'=>68],
+        'delivered' => ['label'=>'Delivered','color'=>'#00b894','bg'=>'#e6faf5','icon'=>'fa-check-circle','pct'=>100],
+        'cancelled' => ['label'=>'Cancelled',      'color'=>'#e84040','bg'=>'#ffeaea','icon'=>'fa-times-circle', 'pct'=>0],
+    ];
+    $st  = $order->status ?? 'pending';
+    $sc  = $statusCfg[$st] ?? $statusCfg['pending'];
+    $idx = ['pending'=>0,'confirmed'=>1,'shipped'=>2,'delivered'=>3,'cancelled'=>-1][$st] ?? 0;
+    // Ensure Carbon instances regardless of model cast
+    $t   = $order->created_at instanceof \Carbon\Carbon ? $order->created_at : \Carbon\Carbon::parse($order->created_at);
+    $upd = $order->updated_at instanceof \Carbon\Carbon ? $order->updated_at : \Carbon\Carbon::parse($order->updated_at);
+    $stepsTimeline = [
+        ['label'=>'Order placed',              'sub' =>'Order #'.($order->order_number??$order->id).' received','time'=>$t->format('H:i, d/m/Y'),'done'=>true, 'cur'=>$idx===0,'icon'=>'fa-shopping-bag','color'=>'#00b894'],
+        ['label'=>'Order Confirmation',                'sub' =>'Seller confirmed & preparing','time'=>$idx>=1?$t->copy()->addHours(1)->format('H:i, d/m/Y'):'Pending confirmation','done'=>$idx>=1,'cur'=>$idx===1,'icon'=>'fa-clipboard-check','color'=>'#0984e3'],
+        ['label'=>'Pack & ship',     'sub' =>$order->tracking_number?'Tracking number: '.$order->tracking_number.($order->shipping_provider?' — '.$order->shipping_provider:''):'Packing order','time'=>$idx>=2?$t->copy()->addDays(1)->format('H:i, d/m/Y'):'Pending','done'=>$idx>=2,'cur'=>$idx===2,'icon'=>'fa-box','color'=>'#6c5ce7'],
+        ['label'=>'Delivered successfully',             'sub' =>'Customer received the order','time'=>$idx>=3?$upd->format('H:i, d/m/Y'):'Est. '.$t->copy()->addDays(3)->format('d/m/Y').' – '.$t->copy()->addDays(5)->format('d/m/Y'),'done'=>$idx>=3,'cur'=>$idx===3,'icon'=>'fa-home','color'=>'#00b894'],
+    ];
+    $payLabels = ['cod'=>'COD','bank_transfer'=>'Bank transfer','momo'=>'MoMo','zalopay'=>'ZaloPay'];
+@endphp
 
 <style>
-    .info-box {
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-    }
-
-    .info-box p {
-        margin-bottom: 15px;
-        color: #495057;
-    }
-
-    .info-box p:last-child {
-        margin-bottom: 0;
-    }
+.aod-wrap{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start;}
+.aod-card{background:#fff;border-radius:12px;border:1px solid #e8edf2;margin-bottom:16px;overflow:hidden;}
+.aod-card-head{padding:14px 20px;border-bottom:1px solid #e8edf2;font-weight:700;font-size:13.5px;color:#1a1f2e;display:flex;align-items:center;gap:8px;}
+.aod-card-head i{color:#0984e3;font-size:13px;}
+.aod-card-body{padding:18px 20px;}
+/* Timeline */
+.aod-tl{display:flex;flex-direction:column;gap:0;}
+.aod-tl-step{display:flex;gap:0;}
+.aod-tl-line{display:flex;flex-direction:column;align-items:center;width:44px;flex-shrink:0;}
+.aod-tl-dot{width:36px;height:36px;border-radius:50%;border:3px solid #e8edf2;background:#fff;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#b2bec3;flex-shrink:0;transition:.3s;}
+.aod-tl-step.done .aod-tl-dot{color:#fff;}
+.aod-tl-conn{flex:1;width:3px;background:#e8edf2;min-height:28px;}
+.aod-tl-conn.fill{background:#00b894;}
+.aod-tl-body{padding:2px 0 24px 14px;flex:1;}
+.aod-tl-step:last-child .aod-tl-body{padding-bottom:4px;}
+.aod-tl-label{font-size:13px;font-weight:600;color:#b2bec3;display:flex;align-items:center;gap:6px;margin-bottom:2px;}
+.aod-tl-step.done .aod-tl-label{color:#1a1f2e;}
+.aod-cur-tag{font-size:10px;padding:2px 7px;border-radius:10px;color:#fff;font-weight:700;}
+.aod-tl-sub{font-size:12px;color:#94a3b8;margin-bottom:2px;}
+.aod-tl-time{font-size:11px;color:#b2bec3;display:flex;align-items:center;gap:3px;}
+/* Info rows */
+.aod-info-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f4f7fa;font-size:13px;}
+.aod-info-row:last-child{border-bottom:none;}
+.aod-info-lbl{color:#64748b;}
+.aod-info-val{font-weight:600;color:#1a1f2e;text-align:right;}
+/* Items */
+.aod-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f4f7fa;}
+.aod-item:last-child{border-bottom:none;}
+.aod-item-img{width:52px;height:52px;object-fit:cover;border-radius:8px;flex-shrink:0;background:#f4f7fa;}
+/* Buttons */
+.aod-btn-step{display:block;width:100%;padding:11px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:6px;}
+.aod-btn-confirm{background:#0984e3;color:#fff;}
+.aod-btn-confirm:hover{background:#0773c5;}
+.aod-btn-ship{background:#6c5ce7;color:#fff;}
+.aod-btn-ship:hover{background:#5a4bd1;}
+.aod-btn-deliver{background:#00b894;color:#fff;}
+.aod-btn-deliver:hover{background:#00a381;}
+.aod-btn-cancel{background:#fff;color:#e84040;border:1.5px solid #e84040;margin-bottom:0;}
+.aod-btn-cancel:hover{background:#ffeaea;}
+@media(max-width:900px){.aod-wrap{grid-template-columns:1fr;}}
 </style>
+
+{{-- Page header --}}
+<div class="pg-hdr" style="margin-bottom:20px">
+  <div>
+    <h2 style="display:flex;align-items:center;gap:10px">
+      Order <span style="color:#0984e3">#{{ $order->order_number ?? $order->id }}</span>
+      <span style="font-size:13px;padding:4px 12px;border-radius:20px;font-weight:700;background:{{ $sc['bg'] }};color:{{ $sc['color'] }}">
+        <i class="fas {{ $sc['icon'] }}" style="font-size:11px"></i> {{ $sc['label'] }}
+      </span>
+    </h2>
+    <p>{{ $t->format('H:i, d/m/Y') }} • {{ $order->customer_name }} • {{ $order->customer_email }}</p>
+  </div>
+  <a href="{{ route('admin.orders') }}" class="btn-icon btn-icon-secondary" style="padding:8px 16px;border-radius:8px;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600">
+    <i class="fas fa-arrow-left"></i> Back to list
+  </a>
+</div>
+
+@if(session('success'))
+<div class="alert alert-success alert-dismissible fade show mb-4" style="border-radius:10px;font-size:13px">
+  <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+@endif
+
+<div class="aod-wrap">
+  {{-- LEFT COLUMN --}}
+  <div>
+    {{-- Timeline --}}
+    <div class="aod-card">
+      <div class="aod-card-head"><i class="fas fa-map-marker-alt"></i> Order Progress
+        @if($order->tracking_number)
+        <span style="margin-left:auto;background:#f0f4ff;color:#0984e3;font-size:11px;padding:3px 10px;border-radius:12px;font-weight:600">
+          <i class="fas fa-barcode"></i> {{ $order->tracking_number }}
+        </span>
+        @endif
+      </div>
+      <div class="aod-card-body">
+        <div class="aod-tl">
+          @foreach($stepsTimeline as $i => $step)
+          <div class="aod-tl-step {{ $step['done'] ? 'done' : '' }}">
+            <div class="aod-tl-line">
+              <div class="aod-tl-dot" style="{{ $step['done'] ? 'background:'.$step['color'].';border-color:'.$step['color'] : '' }}">
+                @if($step['done'])
+                  <i class="fas {{ $step['cur'] ? $step['icon'] : 'fa-check' }}" style="font-size:.75rem"></i>
+                @else
+                  <i class="fas {{ $step['icon'] }}" style="font-size:.75rem"></i>
+                @endif
+              </div>
+              @if($i < count($stepsTimeline)-1)
+              <div class="aod-tl-conn {{ $step['done'] && $stepsTimeline[$i+1]['done'] ? 'fill' : '' }}"></div>
+              @endif
+            </div>
+            <div class="aod-tl-body">
+              <div class="aod-tl-label" style="{{ $step['cur'] ? 'color:'.$step['color'] : '' }}">
+                {{ $step['label'] }}
+                @if($step['cur'])<span class="aod-cur-tag" style="background:{{ $step['color'] }}">Current</span>@endif
+              </div>
+              <div class="aod-tl-sub">{{ $step['sub'] }}</div>
+              <div class="aod-tl-time"><i class="fas fa-clock"></i> {{ $step['time'] }}</div>
+            </div>
+          </div>
+          @endforeach
+        </div>
+      </div>
+    </div>
+
+    {{-- Order items --}}
+    <div class="aod-card">
+      <div class="aod-card-head"><i class="fas fa-box-open"></i> Products ({{ $order->items->count() }})</div>
+      <div class="aod-card-body">
+        @foreach($order->items as $item)
+        <div class="aod-item">
+          @if(isset($item->product->image))
+          <img src="{{ asset('storage/'.$item->product->image) }}" class="aod-item-img"
+               onerror="this.src='https://via.placeholder.com/52x52/f4f7fa/94a3b8?text=SP'" alt="">
+          @else
+          <div class="aod-item-img" style="display:flex;align-items:center;justify-content:center;color:#b2bec3"><i class="fas fa-image"></i></div>
+          @endif
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600;color:#1a1f2e">{{ $item->product_name ?? ($item->product->name ?? 'Products') }}</div>
+            <div style="font-size:12px;color:#94a3b8">Unit Price: ${{ number_format($item->price, 2) }} × {{ $item->quantity }}</div>
+          </div>
+          <div style="font-size:13px;font-weight:700;color:#e84040;white-space:nowrap">${{ number_format($item->subtotal ?? $item->price*$item->quantity, 2) }}</div>
+        </div>
+        @endforeach
+        <div style="border-top:2px solid #f4f7fa;padding-top:14px;margin-top:8px">
+          @if(($order->discount_amount??0)>0)
+          <div class="aod-info-row"><span class="aod-info-lbl">Discount ({{ $order->coupon_code }})</span><span style="color:#00b894;font-weight:700">-${{ number_format($order->discount_amount, 2) }}</span></div>
+          @endif
+          <div class="aod-info-row"><span class="aod-info-lbl">Shipping</span><span style="color:#00b894;font-weight:700">Free</span></div>
+          <div class="aod-info-row" style="font-size:15px;padding-top:12px;border-bottom:none"><span style="font-weight:800;color:#1a1f2e">Total</span><span style="font-weight:800;color:#e84040;font-size:18px">${{ number_format($order->total_amount, 2) }}</span></div>
+        </div>
+      </div>
+    </div>
+
+    {{-- Customer & Delivery --}}
+    <div class="aod-card">
+      <div class="aod-card-head"><i class="fas fa-user"></i> Delivery Info</div>
+      <div class="aod-card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="aod-info-row"><span class="aod-info-lbl">Full name</span><span class="aod-info-val">{{ $order->customer_name }}</span></div>
+            <div class="aod-info-row"><span class="aod-info-lbl">Email</span><span class="aod-info-val" style="font-size:12px">{{ $order->customer_email }}</span></div>
+            <div class="aod-info-row"><span class="aod-info-lbl">Phone</span><span class="aod-info-val">{{ $order->customer_phone }}</span></div>
+          </div>
+          <div class="col-md-6">
+            <div class="aod-info-row"><span class="aod-info-lbl">Address</span><span class="aod-info-val" style="max-width:200px;text-align:right">{{ $order->delivery_address }}</span></div>
+            @if($order->notes)
+            <div class="aod-info-row"><span class="aod-info-lbl">Notes</span><span class="aod-info-val">{{ $order->notes }}</span></div>
+            @endif
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{-- RIGHT COLUMN --}}
+  <div>
+    {{-- Quick-step confirm buttons --}}
+    @if($st !== 'delivered' && $st !== 'cancelled')
+    <div class="aod-card">
+      <div class="aod-card-head"><i class="fas fa-bolt"></i> Update Status</div>
+      <div class="aod-card-body">
+        {{-- Next-step buttons --}}
+        @if($st === 'pending')
+        <form method="POST" action="{{ route('admin.orders.update',$order) }}">
+          @csrf @method('PUT')
+          <input type="hidden" name="status" value="confirmed">
+          <button type="submit" class="aod-btn-step aod-btn-confirm">
+            <i class="fas fa-check"></i> Order Confirmation
+          </button>
+        </form>
+        @endif
+        @if($st === 'confirmed')
+        <form method="POST" action="{{ route('admin.orders.update',$order) }}" id="shipForm">
+          @csrf @method('PUT')
+          <input type="hidden" name="status" value="shipped">
+          <div style="margin-bottom:10px">
+            <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Tracking number <span style="color:#94a3b8">(optional)</span></label>
+            <input type="text" name="tracking_number" value="{{ $order->tracking_number }}"
+                   placeholder="VD: GHTK1234567"
+                   style="width:100%;padding:8px 12px;border:1.5px solid #e8edf2;border-radius:8px;font-size:13px">
+          </div>
+          <div style="margin-bottom:10px">
+            <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Shipping carrier</label>
+            <select name="shipping_provider" style="width:100%;padding:8px 12px;border:1.5px solid #e8edf2;border-radius:8px;font-size:13px">
+              <option value="">-- Select --</option>
+              @foreach(['GHTK','GHN','VNPT Post','Viettel Post','J&T Express','Shopee Express','TikiNOW'] as $sp)
+              <option value="{{ $sp }}" {{ $order->shipping_provider===$sp?'selected':'' }}>{{ $sp }}</option>
+              @endforeach
+            </select>
+          </div>
+          <button type="submit" class="aod-btn-step aod-btn-ship">
+            <i class="fas fa-truck"></i> Hand to carrier
+          </button>
+        </form>
+        @endif
+        @if($st === 'shipped')
+        <form method="POST" action="{{ route('admin.orders.update',$order) }}">
+          @csrf @method('PUT')
+          <input type="hidden" name="status" value="delivered">
+          <button type="submit" class="aod-btn-step aod-btn-deliver">
+            <i class="fas fa-home"></i> Confirm delivered
+          </button>
+        </form>
+        @endif
+        {{-- Cancel --}}
+        <form method="POST" action="{{ route('admin.orders.update',$order) }}" onsubmit="return confirm('Cancel this order?')">
+          @csrf @method('PUT')
+          <input type="hidden" name="status" value="cancelled">
+          <button type="submit" class="aod-btn-step aod-btn-cancel" style="border:1.5px solid #e84040;background:#fff;color:#e84040;margin-top:6px">
+            <i class="fas fa-times"></i> Cancel order
+          </button>
+        </form>
+      </div>
+    </div>
+    @else
+    <div class="aod-card">
+      <div class="aod-card-body" style="text-align:center;padding:24px">
+        @if($st === 'delivered')
+          <div style="font-size:2rem">✅</div>
+          <div style="font-weight:700;color:#00b894;margin-top:6px">Delivered</div>
+          <div style="font-size:12px;color:#94a3b8">{{ $upd->format('H:i, d/m/Y') }}</div>
+        @else
+          <div style="font-size:2rem">❌</div>
+          <div style="font-weight:700;color:#e84040;margin-top:6px">Order cancelled</div>
+          <div style="font-size:12px;color:#94a3b8">{{ $upd->format('H:i, d/m/Y') }}</div>
+        @endif
+      </div>
+    </div>
+    @endif
+
+    {{-- Set any status manually --}}
+    <div class="aod-card">
+      <div class="aod-card-head"><i class="fas fa-sliders-h"></i> Manual status update</div>
+      <div class="aod-card-body">
+        <form method="POST" action="{{ route('admin.orders.update',$order) }}">
+          @csrf @method('PUT')
+          <select name="status" style="width:100%;padding:9px 12px;border:1.5px solid #e8edf2;border-radius:8px;font-size:13px;margin-bottom:10px">
+            <option value="pending"   {{ $st==='pending'?'selected':'' }}>Pending confirmation</option>
+            <option value="confirmed" {{ $st==='confirmed'?'selected':'' }}>Confirmed</option>
+            <option value="shipped"   {{ $st==='shipped'?'selected':'' }}>Shipping</option>
+            <option value="delivered" {{ $st==='delivered'?'selected':'' }}>Delivered</option>
+            <option value="cancelled" {{ $st==='cancelled'?'selected':'' }}>Cancelled</option>
+          </select>
+          <button type="submit" style="width:100%;padding:9px;background:#f4f7fa;border:1.5px solid #e8edf2;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;color:#1a1f2e">
+            <i class="fas fa-save me-1"></i> Save changes
+          </button>
+        </form>
+      </div>
+    </div>
+
+    {{-- Payment info --}}
+    <div class="aod-card">
+      <div class="aod-card-head"><i class="fas fa-credit-card"></i> Checkout</div>
+      <div class="aod-card-body">
+        <div class="aod-info-row">
+          <span class="aod-info-lbl">Payment method</span>
+          <span class="aod-info-val">{{ $payLabels[$order->payment_method??''] ?? ucfirst($order->payment_method??'—') }}</span>
+        </div>
+        <div class="aod-info-row">
+          <span class="aod-info-lbl">Payment Status</span>
+          <span class="aod-info-val">
+            @if(in_array($order->payment_status,['paid','completed']))
+              <span style="background:#e6faf5;color:#00b894;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700">✓ Paid</span>
+            @else
+              <span style="background:#fff9ec;color:#f39c12;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700">⏳ Awaiting payment</span>
+            @endif
+          </span>
+        </div>
+        @if($order->payment_reference)
+        <div class="aod-info-row">
+          <span class="aod-info-lbl">Transaction ID</span>
+          <span class="aod-info-val" style="font-size:12px">{{ $order->payment_reference }}</span>
+        </div>
+        @endif
+        @if($order->paid_at)
+        <div class="aod-info-row">
+          <span class="aod-info-lbl">Paid at</span>
+          <span class="aod-info-val">{{ ($order->paid_at instanceof \Carbon\Carbon ? $order->paid_at : \Carbon\Carbon::parse($order->paid_at))->format('H:i, d/m/Y') }}</span>
+        </div>
+        @endif
+      </div>
+    </div>
+  </div>
+</div>
 @endsection

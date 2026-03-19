@@ -1,22 +1,22 @@
 @component('mail::message')
-# Đặt lại mật khẩu TechStore
+# Password Reset — TechStore
 
-Xin chào {{ $user->name }},
+Hello {{ $user->name }},
 
-Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Nhấp vào nút dưới đây để đặt lại mật khẩu:
+We received a request to reset the password for your account. Click the button below to reset your password:
 
 @component('mail::button', ['url' => $resetLink, 'color' => 'success'])
-Đặt lại mật khẩu
+Reset Password
 @endcomponent
 
-Link này sẽ hết hạn trong 60 phút.
+This link will expire in 60 minutes.
 
-Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.
+If you did not request a password reset, please ignore this email.
 
-Trân trọng,<br>
+Best regards,<br>
 {{ config('app.name') }}
 
 @component('mail::footer')
-© {{ date('Y') }} {{ config('app.name') }}. Tất cả các quyền được bảo lưu.
+© {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
 @endcomponent
 @endcomponent

@@ -10,13 +10,15 @@ class ZaloPayPayment implements PaymentGatewayInterface
 
     protected $key2;
 
-    protected $endpoint = 'https://sandbox.zalopay.com.vn/api/v2/create';
+    // Official ZaloPay sandbox endpoint
+    protected $endpoint = 'https://sb-openapi.zalopay.vn/v2/create';
 
     public function __construct()
     {
+        // Default = public sandbox test credentials from ZaloPay docs
         $this->appId = env('ZALOPAY_APP_ID', '2553');
-        $this->key1 = env('ZALOPAY_KEY1', '');
-        $this->key2 = env('ZALOPAY_KEY2', '');
+        $this->key1  = env('ZALOPAY_KEY1', 'PcY4iZIKFCIdgZvA6ueMcMHHUbRLYjPL');
+        $this->key2  = env('ZALOPAY_KEY2', 'kLtgPl8HHhfvMuDHPwKfgfsY4Vu/kcrolarsamahplain');
     }
 
     /**
@@ -24,37 +26,83 @@ class ZaloPayPayment implements PaymentGatewayInterface
      */
     public function process($order)
     {
-        $reference = 'ZLP'.$order->id.time();
+        $reference = 'ZLP' . $order->id . date('mdHi');
 
         $order->update([
-            'payment_method' => 'e_wallet',
-            'payment_gateway' => 'zalopay',
+            'payment_method'    => 'e_wallet',
+            'payment_gateway'   => 'zalopay',
             'payment_reference' => $reference,
-            'payment_status' => 'pending',
+            'payment_status'    => 'pending',
         ]);
 
-        // Generate Zalo Pay payment link
-        $paymentLink = $this->generatePaymentLink($order, $reference);
-
         return [
-            'success' => true,
-            'message' => 'Chuyển hướng tới Zalo Pay...',
-            'order' => $order,
+            'success'   => true,
+            'message'   => 'Please scan the ZaloPay QR code to complete payment.',
+            'order'     => $order,
             'reference' => $reference,
-            'payment_url' => $paymentLink,
         ];
     }
 
     /**
-     * Generate Zalo Pay link
+     * Generate ZaloPay payment link by calling the real sandbox API.
+     * Signs the request with HMAC-SHA256 using key1.
      */
     protected function generatePaymentLink($order, $reference)
     {
-        $amount = intval($order->total_amount * 100); // Zalo Pay uses cents
-        $description = 'TechStore - Order '.$order->order_number;
+        $appId       = (int) $this->appId;
+        // app_trans_id must be unique per day | format: yymmdd_<unique>
+        $appTransId  = date('ymd') . '_' . substr($reference, 0, 20);
+        $appUser     = 'user_' . ($order->user_id ?? 'guest');
+        $appTime     = (int) (microtime(true) * 1000); // milliseconds
+        $amount      = (int) $order->total_amount;     // VND, no multiplier
+        $description = 'TechStore - ' . $order->order_number;
+        $callbackUrl = route('checkout.payment.callback', ['gateway' => 'zalopay']);
+        $embedData   = json_encode(['redirecturl' => $callbackUrl]);
+        $item        = '[]';
 
-        // Zalo Pay payment URL format (simplified for demo)
-        return "https://sandbox.zalopay.com.vn/web/index.php?action=payUsingToken&appId={$this->appId}&amount={$amount}&appTransId={$reference}&description=".urlencode($description).'&returnUrl='.route('payment.callback', ['gateway' => 'zalopay']);
+        // MAC = HMAC-SHA256(key1, "app_id|app_trans_id|app_user|amount|app_time|embed_data|item")
+        $rawMac = implode('|', [$appId, $appTransId, $appUser, $amount, $appTime, $embedData, $item]);
+        $mac    = hash_hmac('sha256', $rawMac, $this->key1);
+
+        $params = [
+            'app_id'       => $appId,
+            'app_trans_id' => $appTransId,
+            'app_user'     => $appUser,
+            'app_time'     => $appTime,
+            'amount'       => $amount,
+            'item'         => $item,
+            'embed_data'   => $embedData,
+            'description'  => $description,
+            'bank_code'    => '',
+            'mac'          => $mac,
+        ];
+
+        try {
+            $ch = curl_init($this->endpoint);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST           => true,
+                CURLOPT_POSTFIELDS     => http_build_query($params),
+                CURLOPT_TIMEOUT        => 10,
+                CURLOPT_SSL_VERIFYPEER => false,
+            ]);
+            $raw    = curl_exec($ch);
+            $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($status === 200 && $raw) {
+                $res = json_decode($raw, true);
+                if (!empty($res['order_url'])) {
+                    return $res['order_url'];  // real ZaloPay payment page
+                }
+                \Log::warning('ZaloPay API error: ' . $raw);
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('ZaloPay exception: ' . $e->getMessage());
+        }
+
+        // Fallback: show local confirm page for demo
+        return route('checkout.payment.confirm', ['order' => $order->id, 'gateway' => 'zalopay']);
     }
 
     /**
@@ -65,7 +113,7 @@ class ZaloPayPayment implements PaymentGatewayInterface
         // Would check Zalo Pay API for transaction status
         return [
             'success' => false,
-            'message' => 'Đang kiểm tra trạng thái thanh toán...',
+            'message' => 'Checking payment status...',
         ];
     }
 
@@ -74,24 +122,18 @@ class ZaloPayPayment implements PaymentGatewayInterface
      */
     public function getPaymentDetails($order)
     {
-        $paymentUrl = $this->generatePaymentLink($order, $order->payment_reference ?? 'ZLP'.$order->id.time());
-
         return [
-            'title' => 'Thanh Toán Qua Zalo Pay',
-            'description' => 'Thanh toán nhanh chóng qua ví Zalo',
-            'icon' => 'fas fa-qrcode',
-            'color' => '#0085ff',
-            'amount' => $order->total_amount,
-            'payment_url' => $paymentUrl,
-            'qr_url' => $paymentUrl,
-            'qr_placeholder' => 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23f0f0f0" width="200" height="200"/%3E%3Ctext x="100" y="100" text-anchor="middle" dy=".3em" font-size="14"%3EZalo Pay QR Code%3C/text%3E%3C/svg%3E',
-            'note' => 'Quét mã QR bằng ứng dụng Zalo để thanh toán. Đơn hàng sẽ tự động xác nhận khi thanh toán thành công.',
-            'phone' => '0977777777',
-            'steps' => [
-                'Mở ứng dụng Zalo',
-                'Chọn Zalo Pay',
-                'Quét QR hoặc nhập thông tin',
-                'Xác nhận và hoàn tất',
+            'title'   => 'ZaloPay Wallet',
+            'amount'  => $order->total_amount,
+            'qr_path' => '/images/qr/zalopay-qr.png',
+            'note'    => 'Scan the QR code with the ZaloPay app. Please transfer the exact amount and include the order number in the message.',
+            'ref'     => $order->order_number ?? ('ORD-' . $order->id),
+            'steps'   => [
+                'Open the ZaloPay app on your phone',
+                'Tap the QR scan icon',
+                'Scan the QR code shown below',
+                'Enter the exact amount and order number',
+                'Confirm payment',
             ],
         ];
     }
@@ -101,6 +143,6 @@ class ZaloPayPayment implements PaymentGatewayInterface
      */
     public function requiresRedirect()
     {
-        return true;
+        return false;
     }
 }

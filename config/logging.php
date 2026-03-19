@@ -118,6 +118,20 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'mfa' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/mfa.log'),
+            'level' => 'debug',
+            'replace_placeholders' => true,
+        ],
+
+        'sms' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/sms.log'),
+            'level' => 'debug',
+            'replace_placeholders' => true,
+        ],
+
         'null' => [
             'driver' => 'monolog',
             'handler' => NullHandler::class,

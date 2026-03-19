@@ -4,6 +4,27 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Product Model
+ *
+ * @property int $id
+ * @property string $name
+ * @property string $slug
+ * @property string $description
+ * @property string|null $category
+ * @property int $category_id
+ * @property float $price
+ * @property float $original_price
+ * @property int $stock
+ * @property string|null $image
+ * @property string|null $manufacturer
+ * @property array|null $specifications
+ * @property bool $is_featured
+ * @property float $rating
+ * @property int $reviews_count
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ */
 class Product extends Model
 {
     protected $fillable = [
@@ -39,27 +60,11 @@ class Product extends Model
     }
 
     /**
-     * Get reviews for this product
+     * Get the reviews for this product
      */
     public function reviews()
     {
         return $this->hasMany(Review::class);
-    }
-
-    /**
-     * Get images for this product
-     */
-    public function images()
-    {
-        return $this->hasMany(ProductImage::class)->orderBy('order');
-    }
-
-    /**
-     * Get wishlist entries for this product
-     */
-    public function wishlists()
-    {
-        return $this->hasMany(Wishlist::class);
     }
 
     public function getDiscountPercentageAttribute()
@@ -67,7 +72,6 @@ class Product extends Model
         if ($this->original_price && $this->price < $this->original_price) {
             return round((($this->original_price - $this->price) / $this->original_price) * 100);
         }
-
         return 0;
     }
 }

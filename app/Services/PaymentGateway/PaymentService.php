@@ -31,22 +31,22 @@ class PaymentService
     {
         return [
             'cod' => [
-                'label' => 'Thanh Toán Khi Nhận Hàng',
+                'label' => 'Cash on Delivery',
                 'gateway' => 'cod',
                 'icon' => 'fas fa-hand-holding-usd',
             ],
             'bank_transfer' => [
-                'label' => 'Chuyển Khoản Ngân Hàng',
+                'label' => 'Bank Transfer',
                 'gateway' => 'bank_transfer',
                 'icon' => 'fas fa-university',
             ],
             'momo' => [
-                'label' => 'Thanh Toán Qua Momo',
+                'label' => 'Pay via Momo',
                 'gateway' => 'momo',
                 'icon' => 'fas fa-mobile-alt',
             ],
             'zalopay' => [
-                'label' => 'Thanh Toán Qua Zalo Pay',
+                'label' => 'Pay via Zalo Pay',
                 'gateway' => 'zalopay',
                 'icon' => 'fas fa-qrcode',
             ],
@@ -63,7 +63,7 @@ class PaymentService
         if (! $paymentGateway) {
             return [
                 'success' => false,
-                'message' => 'Phương thức thanh toán không hợp lệ',
+                'message' => 'Invalid payment method',
             ];
         }
 
@@ -80,7 +80,7 @@ class PaymentService
         if (! $paymentGateway) {
             return [
                 'success' => false,
-                'message' => 'Phương thức thanh toán không hợp lệ',
+                'message' => 'Invalid payment method',
             ];
         }
 

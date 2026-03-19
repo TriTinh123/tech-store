@@ -1,0 +1,1 @@
+otpauth://totp/TechStore+%28admin%40techstore.com%29?secret=6W7RCTSG25PD2OLEZ6IMXFFXJLAFQ2HT&issuer=TechStore&algorithm=SHA1&digits=6&period=30

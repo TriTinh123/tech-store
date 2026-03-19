@@ -33,13 +33,13 @@ class CartController extends Controller
         $product = Product::find($id);
         if (! $product) {
             if ($request->wantsJson()) {
-                return response()->json(['error' => 'Sản phẩm không tồn tại'], 404);
+                return response()->json(['error' => 'Product not found'], 404);
             }
 
-            return redirect()->back()->with('error', 'Sản phẩm không tồn tại');
+            return redirect()->back()->with('error', 'Product not found');
         }
 
-        $quantity = $request->get('quantity', 1);
+        $quantity = $request->input('quantity', 1);
         $cart = session()->get('cart', []);
 
         if (isset($cart[$id])) {
@@ -56,13 +56,13 @@ class CartController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Thêm vào giỏ hàng thành công',
+                'message' => 'Added to cart successfully',
                 'cart_count' => $cartCount,
                 'product_name' => $product->name,
             ]);
         }
 
-        return redirect()->route('cart.index')->with('success', 'Thêm vào giỏ hàng thành công');
+        return redirect()->route('cart.index')->with('success', 'Added to cart successfully');
     }
 
     public function remove($id)
@@ -86,19 +86,19 @@ class CartController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Xóa sản phẩm khỏi giỏ hàng',
+                'message' => 'Product removed from cart',
                 'cart_count' => $cartCount,
                 'total' => $total,
             ]);
         }
 
-        return redirect()->route('cart.index')->with('success', 'Xóa sản phẩm khỏi giỏ hàng');
+        return redirect()->route('cart.index')->with('success', 'Product removed from cart');
     }
 
     public function update($id, Request $request)
     {
         $cart = session()->get('cart', []);
-        $quantity = $request->get('quantity', 1);
+        $quantity = $request->input('quantity', 1);
 
         if ($quantity <= 0) {
             unset($cart[$id]);
@@ -108,13 +108,13 @@ class CartController extends Controller
 
         session()->put('cart', $cart);
 
-        return redirect()->route('cart.index')->with('success', 'Cập nhật giỏ hàng');
+        return redirect()->route('cart.index')->with('success', 'Cart updated');
     }
 
     public function clear()
     {
         session()->forget('cart');
 
-        return redirect()->route('cart.index')->with('success', 'Đã xóa giỏ hàng');
+        return redirect()->route('cart.index')->with('success', 'Cart cleared');
     }
 }

@@ -7,12 +7,12 @@
             <div class="card shadow-lg">
                 <div class="card-header" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
                     <h3 class="mb-0">
-                        <i class="fas fa-undo"></i> Quên Mật Khẩu?
+                        <i class="fas fa-undo"></i> Forgot Password?
                     </h3>
                 </div>
                 <div class="card-body">
                     <p class="text-muted mb-4">
-                        Nhập email của bạn để nhận liên kết đặt lại mật khẩu.
+                        Enter your email to receive a password reset link.
                     </p>
 
                     @if(session('success'))
@@ -31,7 +31,7 @@
 
                     @if($errors->any())
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle"></i> Kiểm tra lại email:
+                            <i class="fas fa-exclamation-circle"></i> Please check your email:
                             <ul class="mb-0 mt-2">
                                 @foreach($errors->all() as $error)
                                     <li>{{ $error }}</li>
@@ -46,7 +46,7 @@
 
                         <div class="form-group mb-4">
                             <label for="email" class="form-label">
-                                <i class="fas fa-envelope"></i> Email của bạn
+                                <i class="fas fa-envelope"></i> Your email
                             </label>
                             <input type="email" 
                                    class="form-control form-control-lg @error('email') is-invalid @enderror" 
@@ -63,7 +63,7 @@
 
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-paper-plane"></i> Gửi Liên Kết Đặt Lại
+                                <i class="fas fa-paper-plane"></i> Send Reset Link
                             </button>
                         </div>
 
@@ -71,15 +71,15 @@
 
                         <div class="text-center">
                             <p class="mb-0">
-                                Nhớ mật khẩu? 
-                                <a href="{{ route('login') }}" class="btn btn-link p-0">Đăng Nhập</a>
+                                Remember your password? 
+                                <a href="{{ route('login') }}" class="btn btn-link p-0">Sign In</a>
                             </p>
                         </div>
 
                         <div class="text-center mt-2">
                             <p class="mb-0">
-                                Chưa có tài khoản? 
-                                <a href="{{ route('register') }}" class="btn btn-link p-0">Đăng Ký</a>
+                                Don't have an account? 
+                                <a href="{{ route('register') }}" class="btn btn-link p-0">Register</a>
                             </p>
                         </div>
                     </form>
@@ -88,7 +88,7 @@
 
             <div class="alert alert-info mt-4" role="alert">
                 <i class="fas fa-info-circle"></i> 
-                <strong>Hướng Dẫn:</strong> Nhập email liên kết với tài khoản của bạn, chúng tôi sẽ gửi liên kết đặt lại mật khẩu đến email của bạn.
+                <strong>Instructions:</strong> Enter the email associated with your account and we will send you a password reset link.
             </div>
         </div>
     </div>

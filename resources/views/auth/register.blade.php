@@ -1,465 +1,219 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+﻿<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Đăng Kí - {{ config('app.name', 'Laravel') }}</title>
-    
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=poppins:300,400,500,600,700" rel="stylesheet" />
-    
+    <title>Create Account &mdash; {{ config("app.name", "TechStore") }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .register-container {
-            width: 100%;
-            max-width: 450px;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-
-        .register-header {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: white;
-            padding: 40px 30px;
-            text-align: center;
-        }
-
-        .register-header h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        .register-header p {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .register-form {
-            padding: 40px 30px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            background: #f9f9f9;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            background: white;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-        }
-
-        .form-group input::placeholder {
-            color: #999;
-        }
-
-        .password-group {
-            position: relative;
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 15px;
-            top: 38px;
-            cursor: pointer;
-            font-size: 18px;
-            user-select: none;
-        }
-
-        .password-group input {
-            padding-right: 45px;
-        }
-
-        .error-message {
-            color: #ff6b6b;
-            font-size: 12px;
-            margin-top: 5px;
-        }
-
-        .terms-group {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 25px;
-            font-size: 13px;
-            color: #666;
-        }
-
-        .terms-group input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            margin-top: 2px;
-            margin-right: 10px;
-            cursor: pointer;
-            flex-shrink: 0;
-            accent-color: #3b82f6;
-        }
-
-        .terms-group a {
-            color: #3b82f6;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .terms-group a:hover {
-            text-decoration: underline;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 15px;
-        }
-
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
-        }
-
-        .submit-btn:active {
-            transform: translateY(0);
-        }
-
-        .login-link {
-            text-align: center;
-            font-size: 14px;
-            color: #666;
-        }
-
-        .login-link a {
-            color: #3b82f6;
-            text-decoration: none;
-            font-weight: 700;
-        }
-
-        .login-link a:hover {
-            text-decoration: underline;
-        }
-
-        .divider {
-            text-align: center;
-            margin: 25px 0;
-            font-size: 12px;
-            color: #999;
-            position: relative;
-        }
-
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: #e0e0e0;
-            z-index: 0;
-        }
-
-        .divider span {
-            background: white;
-            padding: 0 10px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .social-login {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .social-btn {
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            background: white;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 20px;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 48px;
-        }
-
-        .social-btn:hover {
-            border-color: #3b82f6;
-            background: rgba(59, 130, 246, 0.05);
-        }
-
-        .google-btn {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #d1d5db;
-            background: white;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #374151;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .google-btn:hover {
-            background: #f3f4f6;
-            border-color: #bfdbfe;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .success-alert {
-            background: #d4edda;
-            color: #155724;
-            padding: 12px 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 13px;
-            border: 1px solid #c3e6cb;
-        }
-
-        @media (max-width: 480px) {
-            .register-container {
-                max-width: 100%;
-            }
-
-            .register-form {
-                padding: 30px 20px;
-            }
-
-            .register-header {
-                padding: 30px 20px;
-            }
-
-            .register-header h1 {
-                font-size: 24px;
-            }
-        }
-
-        .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #1e293b;
-            color: #94a3b8;
-            padding: 40px 20px;
-            text-align: center;
-            font-size: 13px;
-            line-height: 1.8;
-            border-top: 1px solid #334155;
-        }
-
-        .footer p {
-            margin: 8px 0;
-        }
-
-        .footer strong {
-            color: #e2e8f0;
-            font-weight: 600;
-        }
-
-        body {
-            padding-bottom: 200px;
-        }
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:"Inter",sans-serif;min-height:100vh;display:flex;background:#f0f4ff}
+        .auth-shell{display:flex;min-height:100vh;width:100%}
+        .auth-left{width:40%;flex-shrink:0;background:linear-gradient(145deg,#0f172a 0%,#1e1b4b 40%,#312e81 100%);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:60px 48px;position:relative;overflow:hidden;}
+        .auth-left::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 20% 20%,rgba(99,102,241,.35) 0%,transparent 55%),radial-gradient(ellipse at 80% 80%,rgba(59,130,246,.25) 0%,transparent 55%);}
+        .blob{position:absolute;border-radius:50%;filter:blur(60px);opacity:.18;}
+        .blob1{width:280px;height:280px;background:#6366f1;top:-80px;left:-80px;animation:floatB 9s ease-in-out infinite;}
+        .blob2{width:220px;height:220px;background:#3b82f6;bottom:-60px;right:-60px;animation:floatB 9s ease-in-out 3s infinite;}
+        .blob3{width:160px;height:160px;background:#8b5cf6;top:50%;left:50%;transform:translate(-50%,-50%);animation:floatB 9s ease-in-out 1.5s infinite;}
+        @keyframes floatB{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+        .blob3{transform:translate(-50%,-50%)}
+        .left-content{position:relative;z-index:1;width:100%;max-width:320px}
+        .auth-brand{display:flex;align-items:center;gap:12px;margin-bottom:44px}
+        .auth-brand-icon{width:44px;height:44px;background:linear-gradient(135deg,#6366f1,#3b82f6);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 8px 24px rgba(99,102,241,.45)}
+        .auth-brand-name{font-size:22px;font-weight:800;color:#fff;letter-spacing:-.5px}
+        .auth-tagline{font-size:26px;font-weight:800;color:#fff;line-height:1.25;margin-bottom:12px;letter-spacing:-.5px}
+        .auth-tagline span{color:#a5b4fc}
+        .auth-sub{font-size:13.5px;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:36px}
+        .auth-features{display:flex;flex-direction:column;gap:14px}
+        .auth-feat{display:flex;align-items:center;gap:14px}
+        .auth-feat-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+        .auth-feat-text{font-size:13px;font-weight:500;color:rgba(255,255,255,.75)}
+        .auth-right{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:40px 32px;overflow-y:auto;background:#fff;}
+        .auth-form-wrap{width:100%;max-width:460px;padding:8px 0}
+        .form-head{margin-bottom:28px}
+        .form-head h2{font-size:26px;font-weight:800;color:#0f172a;letter-spacing:-.5px;margin-bottom:6px}
+        .form-head p{font-size:14px;color:#64748b}
+        .a-success{background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+        .a-error{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5;border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:20px}
+        .a-error ul{margin:6px 0 0 0;padding-left:18px}
+        .field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+        .field{margin-bottom:16px}
+        .field label{display:block;font-size:11.5px;font-weight:600;color:#374151;text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px}
+        .field label span{color:#ef4444}
+        .input-wrap{position:relative}
+        .input-wrap i.fi{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:13px;pointer-events:none}
+        .input-wrap input,.input-wrap select{width:100%;padding:11px 13px 11px 38px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:"Inter",sans-serif;color:#0f172a;background:#f8fafc;transition:border-color .2s,box-shadow .2s,background .2s;outline:none;}
+        .input-wrap input:focus,.input-wrap select:focus{border-color:#6366f1;background:#fff;box-shadow:0 0 0 4px rgba(99,102,241,.12);}
+        .input-wrap input::placeholder{color:#b0bac9;font-size:13px}
+        .eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:#94a3b8;font-size:14px;transition:color .15s;background:none;border:none;padding:2px}
+        .eye-btn:hover{color:#6366f1}
+        .hint{font-size:11px;color:#94a3b8;margin-top:4px;display:flex;align-items:center;gap:4px}
+        .field-err{font-size:11.5px;color:#ef4444;margin-top:4px;display:flex;align-items:center;gap:4px}
+        .terms-row{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#475569;margin-bottom:18px}
+        .terms-row input[type=checkbox]{width:15px;height:15px;accent-color:#6366f1;cursor:pointer;margin-top:2px;flex-shrink:0}
+        .terms-row a{color:#6366f1;font-weight:600;text-decoration:none}
+        .terms-row a:hover{text-decoration:underline}
+        .btn-primary{width:100%;padding:13px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:"Inter",sans-serif;cursor:pointer;transition:all .2s;box-shadow:0 4px 14px rgba(99,102,241,.35);display:flex;align-items:center;justify-content:center;gap:8px;}
+        .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(99,102,241,.45)}
+        .divider{display:flex;align-items:center;gap:12px;margin:18px 0;font-size:12px;color:#94a3b8}
+        .divider::before,.divider::after{content:"";flex:1;height:1px;background:#e2e8f0}
+        .btn-google{width:100%;padding:12px 16px;border:1.5px solid #e2e8f0;background:#fff;border-radius:10px;font-size:14px;font-weight:600;color:#374151;font-family:"Inter",sans-serif;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;}
+        .btn-google:hover{background:#f8fafc;border-color:#c7d2fe;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+        .switch-link{text-align:center;font-size:13.5px;color:#64748b;margin-top:16px}
+        .switch-link a{color:#6366f1;font-weight:700;text-decoration:none}
+        .switch-link a:hover{text-decoration:underline}
+        .copy-note{text-align:center;font-size:11px;color:#cbd5e1;margin-top:20px;line-height:1.6}
+        @media(max-width:768px){.auth-left{display:none}.auth-right{padding:28px 16px}}
     </style>
 </head>
 <body>
-    <div class="register-container">
-        <!-- Header -->
-        <div class="register-header">
-            <h1>🎉 Tạo Tài Khoản</h1>
-            <p>Tham gia cộng đồng {{ config('app.name', 'Shop') }} ngay hôm nay</p>
+<div class="auth-shell">
+    <div class="auth-left">
+        <div class="blob blob1"></div>
+        <div class="blob blob2"></div>
+        <div class="blob blob3"></div>
+        <div class="left-content">
+            <div class="auth-brand">
+                <div class="auth-brand-icon"><i class="fas fa-bolt" style="color:#fff"></i></div>
+                <span class="auth-brand-name">TechStore</span>
+            </div>
+            <h1 class="auth-tagline">Join the<br><span>TechStore</span><br>community</h1>
+            <p class="auth-sub">Create a free account and enjoy exclusive deals, fast delivery and AI-secured login protection.</p>
+            <div class="auth-features">
+                <div class="auth-feat">
+                    <div class="auth-feat-icon" style="background:rgba(16,185,129,.2)"><i class="fas fa-brain" style="color:#34d399"></i></div>
+                    <span class="auth-feat-text">AI Isolation Forest anomaly detection</span>
+                </div>
+                <div class="auth-feat">
+                    <div class="auth-feat-icon" style="background:rgba(99,102,241,.25)"><i class="fas fa-shield-alt" style="color:#a5b4fc"></i></div>
+                    <span class="auth-feat-text">3FA protection for unusual logins</span>
+                </div>
+                <div class="auth-feat">
+                    <div class="auth-feat-icon" style="background:rgba(59,130,246,.2)"><i class="fas fa-gift" style="color:#60a5fa"></i></div>
+                    <span class="auth-feat-text">Member-only deals and promotions</span>
+                </div>
+                <div class="auth-feat">
+                    <div class="auth-feat-icon" style="background:rgba(245,158,11,.2)"><i class="fas fa-undo-alt" style="color:#fbbf24"></i></div>
+                    <span class="auth-feat-text">Easy returns &amp; refunds</span>
+                </div>
+            </div>
         </div>
-
-        <!-- Form -->
-        <form class="register-form" action="{{ route('register') }}" method="POST">
-            @csrf
-
-            @if (session('success'))
-                <div style="background: #d4edda; color: #155724; padding: 12px 15px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; border: 1px solid #c3e6cb;">
-                    <strong>✓ Thành công!</strong> {{ session('success') }}
-                </div>
-            @endif
-
-            @if ($errors->any())
-                <div style="background: #f8d7da; color: #721c24; padding: 12px 15px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; border: 1px solid #f5c6cb;">
-                    <strong>Lỗi!</strong>
-                    <ul style="margin: 8px 0 0 0; padding-left: 20px;">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            <!-- Full Name -->
-            <div class="form-group">
-                <label for="name">Họ và tên</label>
-                <input 
-                    type="text" 
-                    id="name" 
-                    name="name" 
-                    placeholder="Nguyễn Văn A"
-                    value="{{ old('name') }}"
-                    required
-                >
-                @error('name')
-                    <div class="error-message">{{ $message }}</div>
-                @enderror
-            </div>
-
-            <!-- Email -->
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input 
-                    type="email" 
-                    id="email" 
-                    name="email" 
-                    placeholder="your@email.com"
-                    value="{{ old('email') }}"
-                    required
-                >
-                @error('email')
-                    <div class="error-message">{{ $message }}</div>
-                @enderror
-            </div>
-
-            <!-- Password -->
-            <div class="form-group password-group">
-                <label for="password">Mật khẩu</label>
-                <input 
-                    type="password" 
-                    id="password" 
-                    name="password" 
-                    placeholder="••••••••"
-                    required
-                >
-                <span class="password-toggle" onclick="togglePassword('password')">👁️</span>
-                @error('password')
-                    <div class="error-message">{{ $message }}</div>
-                @enderror
-            </div>
-
-            <!-- Confirm Password -->
-            <div class="form-group password-group">
-                <label for="password_confirmation">Xác nhận mật khẩu</label>
-                <input 
-                    type="password" 
-                    id="password_confirmation" 
-                    name="password_confirmation" 
-                    placeholder="••••••••"
-                    required
-                >
-                <span class="password-toggle" onclick="togglePassword('password_confirmation')">👁️</span>
-            </div>
-
-            <!-- Terms & Conditions -->
-            <div class="terms-group">
-                <input type="checkbox" id="terms" name="terms" value="1" required>
-                <label for="terms">
-                    Tôi đồng ý với <a href="#">Điều khoản dịch vụ</a> và <a href="#">Chính sách bảo mật</a> của {{ config('app.name', 'Shop') }}
-                </label>
-            </div>
-
-            <!-- Submit Button -->
-            <button type="submit" class="submit-btn">
-                Tạo Tài Khoản
-            </button>
-
-            <!-- Login Link -->
-            <div class="login-link">
-                Đã có tài khoản? <a href="{{ route('login') }}">Đăng nhập tại đây</a>
-            </div>
-
-            <!-- Divider -->
-            <div class="divider">
-                <span>Hoặc tiếp tục với</span>
-            </div>
-
-            <!-- Google Login -->
-            <button type="button" class="google-btn" onclick="loginWithGoogle()">
-                <svg style="width: 18px; height: 18px; margin-right: 8px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC04"/>
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                </svg>
-                Continue with Google
-            </button>
-        </form>
     </div>
-
-    <script>
-        function togglePassword(id) {
-            const input = document.getElementById(id);
-            const span = event.target;
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                span.textContent = '🙈';
-            } else {
-                input.type = 'password';
-                span.textContent = '👁️';
-            }
-        }
-
-        function loginWithGoogle() {
-            window.location.href = "{{ route('auth.google') }}";
-        }
-    </script>
-
-    <footer class="footer">
-        <p><strong>© 2026 TechStore.</strong> All rights reserved.</p>
-        <p>Enhanced with traditional web security mechanisms (CSRF, XSS, rate limiting) and AI-based login anomaly detection with Three-Factor Authentication (3FA).</p>
-    </footer>
+    <div class="auth-right">
+        <div class="auth-form-wrap">
+            <div class="form-head">
+                <h2>Create Account</h2>
+                <p>Fill in your details to get started</p>
+            </div>
+            @if(session("success"))
+                <div class="a-success"><i class="fas fa-check-circle"></i> {{ session("success") }}</div>
+            @endif
+            @if($errors->any())
+                <div class="a-error">
+                    <strong><i class="fas fa-exclamation-circle"></i> Please fix the following:</strong>
+                    <ul>@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+                </div>
+            @endif
+            <form class="register-form" action="{{ route("register") }}" method="POST">
+                @csrf
+                <div class="field">
+                    <label for="name">Full name</label>
+                    <div class="input-wrap">
+                        <i class="fas fa-user fi"></i>
+                        <input type="text" id="name" name="name" placeholder="John Doe" value="{{ old("name") }}" required autocomplete="name">
+                    </div>
+                    @error("name")<div class="field-err"><i class="fas fa-circle-exclamation"></i>{{ $message }}</div>@enderror
+                </div>
+                <div class="field">
+                    <label for="email">Email</label>
+                    <div class="input-wrap">
+                        <i class="fas fa-envelope fi"></i>
+                        <input type="email" id="email" name="email" placeholder="your@email.com" value="{{ old("email") }}" required autocomplete="email">
+                    </div>
+                    @error("email")<div class="field-err"><i class="fas fa-circle-exclamation"></i>{{ $message }}</div>@enderror
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label for="password">Password</label>
+                        <div class="input-wrap">
+                            <i class="fas fa-lock fi"></i>
+                            <input type="password" id="password" name="password" placeholder="Min 8 chars" required autocomplete="new-password">
+                            <button type="button" class="eye-btn" onclick="togglePassword('password',this)" tabindex="-1"><i class="fas fa-eye"></i></button>
+                        </div>
+                        @error("password")<div class="field-err"><i class="fas fa-circle-exclamation"></i>{{ $message }}</div>@enderror
+                    </div>
+                    <div class="field">
+                        <label for="password_confirmation">Confirm Password</label>
+                        <div class="input-wrap">
+                            <i class="fas fa-lock fi"></i>
+                            <input type="password" id="password_confirmation" name="password_confirmation" placeholder="Repeat password" required autocomplete="new-password">
+                            <button type="button" class="eye-btn" onclick="togglePassword('password_confirmation',this)" tabindex="-1"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="security_question">Security Question <span>*</span></label>
+                    <div class="input-wrap">
+                        <i class="fas fa-question-circle fi"></i>
+                        <select id="security_question" name="security_question">
+                            <option value="">— Select a question —</option>
+                            <optgroup label="Family">
+                                <option value="What was the name of your first pet?" {{ old("security_question")=="What was the name of your first pet?" ? "selected" : "" }}>What was the name of your first pet?</option>
+                                <option value="What was your childhood best friend&apos;s name?" {{ old("security_question")=="What was your childhood best friend\'s name?" ? "selected" : "" }}>What was your childhood best friend&apos;s name?</option>
+                                <option value="What is your mother&apos;s middle name?" {{ old("security_question")=="What is your mother\'s middle name?" ? "selected" : "" }}>What is your mother&apos;s middle name?</option>
+                                <option value="What is the name of your oldest sibling?" {{ old("security_question")=="What is the name of your oldest sibling?" ? "selected" : "" }}>What is the name of your oldest sibling?</option>
+                            </optgroup>
+                            <optgroup label="Childhood &amp; School">
+                                <option value="What was the name of your elementary school?" {{ old("security_question")=="What was the name of your elementary school?" ? "selected" : "" }}>What was the name of your elementary school?</option>
+                                <option value="What was the name of your favorite teacher?" {{ old("security_question")=="What was the name of your favorite teacher?" ? "selected" : "" }}>What was the name of your favorite teacher?</option>
+                                <option value="What was your childhood nickname?" {{ old("security_question")=="What was your childhood nickname?" ? "selected" : "" }}>What was your childhood nickname?</option>
+                                <option value="What was your favorite subject in school?" {{ old("security_question")=="What was your favorite subject in school?" ? "selected" : "" }}>What was your favorite subject in school?</option>
+                            </optgroup>
+                            <optgroup label="Location">
+                                <option value="What city were you born in?" {{ old("security_question")=="What city were you born in?" ? "selected" : "" }}>What city were you born in?</option>
+                                <option value="What street did you grow up on?" {{ old("security_question")=="What street did you grow up on?" ? "selected" : "" }}>What street did you grow up on?</option>
+                                <option value="What city would you most like to live in?" {{ old("security_question")=="What city would you most like to live in?" ? "selected" : "" }}>What city would you most like to live in?</option>
+                            </optgroup>
+                            <optgroup label="Interests">
+                                <option value="What is your favorite movie?" {{ old("security_question")=="What is your favorite movie?" ? "selected" : "" }}>What is your favorite movie?</option>
+                                <option value="What is your favorite food?" {{ old("security_question")=="What is your favorite food?" ? "selected" : "" }}>What is your favorite food?</option>
+                                <option value="Who is your favorite athlete/sports player?" {{ old("security_question")=="Who is your favorite athlete/sports player?" ? "selected" : "" }}>Who is your favorite athlete/sports player?</option>
+                                <option value="Who is your favorite singer/band?" {{ old("security_question")=="Who is your favorite singer/band?" ? "selected" : "" }}>Who is your favorite singer/band?</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    @error("security_question")<div class="field-err"><i class="fas fa-circle-exclamation"></i>{{ $message }}</div>@enderror
+                </div>
+                <div class="field">
+                    <label for="security_answer">Security Answer <span>*</span></label>
+                    <div class="input-wrap">
+                        <i class="fas fa-key fi"></i>
+                        <input type="text" id="security_answer" name="security_answer" placeholder="Your answer (case-insensitive)" value="{{ old("security_answer") }}" autocomplete="off">
+                    </div>
+                    <div class="hint"><i class="fas fa-info-circle"></i> Used for 3FA verification when AI detects unusual login behavior</div>
+                    @error("security_answer")<div class="field-err"><i class="fas fa-circle-exclamation"></i>{{ $message }}</div>@enderror
+                </div>
+                <div class="terms-row">
+                    <input type="checkbox" id="terms" name="terms" value="1" required>
+                    <label for="terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a> of {{ config("app.name","TechStore") }}</label>
+                </div>
+                <button type="submit" class="btn-primary"><i class="fas fa-user-plus"></i> Create Account</button>
+                <div class="divider">or</div>
+                <button type="button" class="btn-google" onclick="loginWithGoogle()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC04"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                    Continue with Google
+                </button>
+            </form>
+            <p class="switch-link">Already have an account? <a href="{{ route("login") }}">Sign In</a></p>
+            <p class="copy-note">&copy; 2026 TechStore. Secured by AI-based 3FA anomaly detection.</p>
+        </div>
+    </div>
+</div>
+<script>
+    function togglePassword(id,btn){const i=document.getElementById(id),ic=btn.querySelector("i");i.type=i.type==="password"?(ic.classList.replace("fa-eye","fa-eye-slash"),"text"):(ic.classList.replace("fa-eye-slash","fa-eye"),"password");}
+    function loginWithGoogle(){window.location.href="{{ route("auth.google") }}";}
+</script>
 </body>
 </html>

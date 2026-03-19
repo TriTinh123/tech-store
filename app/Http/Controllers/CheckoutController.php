@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Events\OrderCreated;
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Services\PaymentGateway\PaymentService;
+use App\Services\OtpService;
+use App\Services\PurchaseFraudService;
 use Illuminate\Http\Request;
 
 class CheckoutController extends Controller
@@ -23,7 +26,7 @@ class CheckoutController extends Controller
         $cart = session()->get('cart', []);
 
         if (empty($cart)) {
-            return redirect()->route('cart.index')->with('error', 'Giỏ hàng trống');
+            return redirect()->route('cart.index')->with('error', 'Your cart is empty');
         }
 
         $items = [];
@@ -47,17 +50,19 @@ class CheckoutController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'customer_name' => 'required|string|max:255',
-            'customer_email' => 'required|email|max:255',
-            'customer_phone' => 'required|string|max:20',
-            'delivery_address' => 'required|string|max:500',
-            'notes' => 'nullable|string|max:500',
+            'customer_name'   => 'required|string|max:255',
+            'customer_email'  => 'required|email|max:255',
+            'customer_phone'  => 'required|string|max:20',
+            'delivery_address'=> 'required|string|max:500',
+            'notes'           => 'nullable|string|max:500',
+            'coupon_code'     => 'nullable|string|max:50',
+            'discount_amount' => 'nullable|numeric|min:0',
         ]);
 
         $cart = session()->get('cart', []);
 
         if (empty($cart)) {
-            return redirect()->route('cart.index')->with('error', 'Giỏ hàng trống');
+            return redirect()->route('cart.index')->with('error', 'Your cart is empty');
         }
 
         // Calculate total
@@ -69,20 +74,52 @@ class CheckoutController extends Controller
             }
         }
 
+        // ── Purchase Fraud Detection ───────────────────────────────────────
+        $user = auth()->user();
+        if ($user) {
+            $fraud = app(PurchaseFraudService::class)->assess($request, $user, $total);
+            if ($fraud['requires_otp']) {
+                session([
+                    'purchase.pending_checkout' => $validated,
+                    'purchase.cart'             => $cart,
+                    'purchase.total'            => $total,
+                    'purchase.fraud'            => $fraud,
+                ]);
+                app(OtpService::class)->send($user);
+                return redirect()->route('checkout.verify-purchase')
+                    ->with('warning', '⚠️ Order requires additional verification. An OTP code has been sent to ' . $user->email);
+            }
+        }
+
         // Generate order number
         $orderNumber = 'ORD-'.date('YmdHis').'-'.rand(1000, 9999);
 
+        // Apply coupon
+        $discountAmount = 0;
+        $couponCode     = null;
+        if (!empty($validated['coupon_code'])) {
+            $coupon = Coupon::where('code', strtoupper($validated['coupon_code']))->first();
+            if ($coupon && $coupon->isValid($total)) {
+                $discountAmount = $coupon->calcDiscount($total);
+                $couponCode     = $coupon->code;
+                $total          = max(0, $total - $discountAmount);
+                $coupon->increment('used_count');
+            }
+        }
+
         // Create order
         $order = Order::create([
-            'user_id' => auth()->id(),
-            'order_number' => $orderNumber,
-            'customer_name' => $validated['customer_name'],
-            'customer_email' => $validated['customer_email'],
-            'customer_phone' => $validated['customer_phone'],
+            'user_id'          => auth()->id(),
+            'order_number'     => $orderNumber,
+            'customer_name'    => $validated['customer_name'],
+            'customer_email'   => $validated['customer_email'],
+            'customer_phone'   => $validated['customer_phone'],
             'delivery_address' => $validated['delivery_address'],
-            'total_amount' => $total,
-            'status' => 'pending',
-            'notes' => $validated['notes'] ?? null,
+            'total_amount'     => $total,
+            'discount_amount'  => $discountAmount,
+            'coupon_code'      => $couponCode,
+            'status'           => 'pending',
+            'notes'            => $validated['notes'] ?? null,
         ]);
 
         // Create order items
@@ -107,7 +144,7 @@ class CheckoutController extends Controller
         session()->forget('cart');
 
         // Redirect to payment method selection
-        return redirect()->route('payment.method', $order)->with('success', 'Đơn hàng đã được tạo. Vui lòng chọn phương thức thanh toán.');
+        return redirect()->route('checkout.payment.method', $order)->with('success', 'Order created. Please select a payment method.');
     }
 
     /**
@@ -116,7 +153,7 @@ class CheckoutController extends Controller
     public function showPaymentMethod(Order $order)
     {
         if ($order->payment_status && $order->payment_status !== 'pending') {
-            return redirect()->route('order.success', $order)->with('info', 'Đơn hàng này đã thanh toán rồi');
+            return redirect()->route('order.success', $order)->with('info', 'This order has already been paid');
         }
 
         $gateways = $this->paymentService->getAvailableGateways();
@@ -130,7 +167,7 @@ class CheckoutController extends Controller
     public function processPayment(Request $request, Order $order)
     {
         $request->validate([
-            'payment_gateway' => 'required|in:cod,bank_transfer',
+            'payment_gateway' => 'required|in:cod,bank_transfer,momo,zalopay',
         ]);
 
         $gateway = $request->input('payment_gateway');
@@ -147,7 +184,7 @@ class CheckoutController extends Controller
         $paymentGateway = $this->paymentService->getGateway($mappedGateway);
 
         if (! $paymentGateway) {
-            return redirect()->back()->with('error', 'Phương thức thanh toán không hợp lệ');
+            return redirect()->back()->with('error', 'Invalid payment method');
         }
 
         // Process payment
@@ -166,11 +203,11 @@ class CheckoutController extends Controller
         if ($mappedGateway === 'cod') {
             $order->update(['payment_status' => 'completed', 'paid_at' => now()]);
 
-            return redirect()->route('order.success', $order)->with('success', 'Đơn hàng đã được tạo thành công!');
+            return redirect()->route('order.success', $order)->with('success', 'Order created successfully!');
         }
 
         // For Bank Transfer, show confirmation page
-        return redirect()->route('payment.confirm', [
+        return redirect()->route('checkout.payment.confirm', [
             'order' => $order,
             'gateway' => $mappedGateway,
         ])->with('success', $result['message']);
@@ -184,7 +221,7 @@ class CheckoutController extends Controller
         $paymentGateway = $this->paymentService->getGateway($gateway);
 
         if (! $paymentGateway) {
-            return redirect()->back()->with('error', 'Phương thức thanh toán không hợp lệ');
+            return redirect()->back()->with('error', 'Invalid payment method');
         }
 
         $paymentDetails = $paymentGateway->getPaymentDetails($order);
@@ -203,7 +240,7 @@ class CheckoutController extends Controller
             'paid_at' => now(),
         ]);
 
-        return redirect()->route('order.success', $order)->with('success', 'Cảm ơn bạn! Đơn hàng của bạn đã được xác nhận. Chúng tôi sẽ xác minh thanh toán và chuẩn bị hàng.');
+        return redirect()->route('order.success', $order)->with('success', 'Thank you! Your order has been confirmed. We will verify the payment and prepare your items.');
     }
 
     /**
@@ -219,7 +256,7 @@ class CheckoutController extends Controller
         $order = Order::where('payment_reference', $reference)->first();
 
         if (! $order) {
-            return redirect()->route('home')->with('error', 'Không tìm thấy đơn hàng');
+            return redirect()->route('home')->with('error', 'Order not found');
         }
 
         // Update order based on callback
@@ -230,13 +267,13 @@ class CheckoutController extends Controller
                 'status' => 'confirmed',
             ]);
 
-            return redirect()->route('order.success', $order)->with('success', 'Thanh toán thành công!');
+            return redirect()->route('order.success', $order)->with('success', 'Payment successful!');
         } else {
             $order->update([
                 'payment_status' => 'failed',
             ]);
 
-            return redirect()->route('payment.method', $order)->with('error', 'Thanh toán thất bại. Vui lòng thử lại');
+            return redirect()->route('checkout.payment.method', $order)->with('error', 'Payment failed. Please try again');
         }
     }
 

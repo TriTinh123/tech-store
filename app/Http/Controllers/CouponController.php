@@ -7,40 +7,36 @@ use Illuminate\Http\Request;
 
 class CouponController extends Controller
 {
-    /**
-     * Validate and apply coupon
-     */
+    /** AJAX: apply coupon code, returns discount info */
     public function apply(Request $request)
     {
-        $validated = $request->validate([
-            'coupon_code' => 'required|string|max:50',
-            'cart_total' => 'required|numeric|min:0',
-        ]);
+        $request->validate(['code' => 'required|string', 'total' => 'required|numeric|min:0']);
 
-        $coupon = Coupon::where('code', strtoupper($validated['coupon_code']))->first();
+        $coupon = Coupon::where('code', strtoupper(trim($request->code)))->first();
 
-        if (! $coupon) {
-            return response()->json(['success' => false, 'message' => 'Mã giảm giá không tồn tại'], 404);
+        if (!$coupon) {
+            return response()->json(['ok' => false, 'message' => 'Coupon not found.']);
         }
 
-        if (! $coupon->isValid()) {
-            return response()->json(['success' => false, 'message' => 'Mã giảm giá không còn hợp lệ'], 400);
+        $total = (float) $request->total;
+
+        if (!$coupon->isValid($total)) {
+            if (!$coupon->is_active || ($coupon->expires_at && $coupon->expires_at->isPast())) {
+                return response()->json(['ok' => false, 'message' => 'Coupon has expired or is no longer valid.']);
+            }
+            if ($coupon->usage_limit && $coupon->used_count >= $coupon->usage_limit) {
+                return response()->json(['ok' => false, 'message' => 'Coupon has reached its usage limit.']);
+            }
+            return response()->json(['ok' => false, 'message' => 'Minimum order of ' . number_format($coupon->min_order_amount, 0, ',', '.') . '₫ required to use this coupon.']);
         }
 
-        if ($validated['cart_total'] < $coupon->min_order_amount) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Đơn hàng tối thiểu là '.number_format($coupon->min_order_amount, 0, ',', '.').'₫',
-            ], 400);
-        }
-
-        $discount = $coupon->calculateDiscount($validated['cart_total']);
+        $discount = $coupon->calcDiscount($total);
 
         return response()->json([
-            'success' => true,
-            'message' => 'Áp dụng mã giảm giá thành công',
-            'coupon' => $coupon,
-            'discount_amount' => $discount,
+            'ok'       => true,
+            'discount' => $discount,
+            'final'    => $total - $discount,
+            'message'  => 'Coupon applied! Discount: ' . number_format($discount, 0, ',', '.') . '₫',
         ]);
     }
 }

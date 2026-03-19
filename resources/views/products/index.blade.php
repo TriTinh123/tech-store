@@ -5,9 +5,9 @@
     <!-- Header -->
     <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
         <h1 style="font-size: 32px; color: #333; margin-bottom: 10px;">
-            <i class="fas fa-shopping-bags"></i> Tất cả sản phẩm
+            <i class="fas fa-shopping-bags"></i> All Products
         </h1>
-        <p style="color: #666; font-size: 14px;">Tìm kiếm sản phẩm phụ kiện công nghệ chất lượng cao</p>
+        <p style="color: #666; font-size: 14px;">Search high-quality tech accessories</p>
     </div>
 
     <div style="display: grid; grid-template-columns: 220px 1fr; gap: 20px;">
@@ -16,12 +16,12 @@
             <!-- Categories -->
             <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px;">
                 <div style="background: #00b894; color: white; padding: 15px; font-weight: 600;">
-                    <i class="fas fa-filter"></i> DANH MỤC
+                    <i class="fas fa-filter"></i> CATEGORIES
                 </div>
                 <ul style="list-style: none; padding: 0; margin: 0;">
                     <li style="border-bottom: 1px solid #f0f0f0;">
                         <a href="{{ route('products.index') }}" style="display: block; padding: 12px 15px; text-decoration: none; color: #333; transition: all 0.3s;">
-                            ✓ Tất cả
+                            ✓ All
                         </a>
                     </li>
                     @foreach($categories as $category)
@@ -40,31 +40,31 @@
             <!-- Sort Options -->
             <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
                 <div style="background: #00b894; color: white; padding: 15px; font-weight: 600;">
-                    <i class="fas fa-sort"></i> SẮP XẾP
+                    <i class="fas fa-sort"></i> SORT
                 </div>
                 <ul style="list-style: none; padding: 0; margin: 0;">
                     <li style="border-bottom: 1px solid #f0f0f0;">
                         <a href="{{ route('products.index', array_merge(request()->query(), ['sort' => 'latest'])) }}" 
                            style="display: block; padding: 12px 15px; text-decoration: none; color: #333; @if(request('sort', 'latest') == 'latest') background: #e8f8f5; color: #00b894; font-weight: 600; @endif">
-                            Mới nhất
+                            Newest
                         </a>
                     </li>
                     <li style="border-bottom: 1px solid #f0f0f0;">
                         <a href="{{ route('products.index', array_merge(request()->query(), ['sort' => 'price-low'])) }}" 
                            style="display: block; padding: 12px 15px; text-decoration: none; color: #333; @if(request('sort') == 'price-low') background: #e8f8f5; color: #00b894; font-weight: 600; @endif">
-                            Giá: Thấp đến cao
+                            Price: Low to High
                         </a>
                     </li>
                     <li style="border-bottom: 1px solid #f0f0f0;">
                         <a href="{{ route('products.index', array_merge(request()->query(), ['sort' => 'price-high'])) }}" 
                            style="display: block; padding: 12px 15px; text-decoration: none; color: #333; @if(request('sort') == 'price-high') background: #e8f8f5; color: #00b894; font-weight: 600; @endif">
-                            Giá: Cao đến thấp
+                            Price: High to Low
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('products.index', array_merge(request()->query(), ['sort' => 'rating'])) }}" 
                            style="display: block; padding: 12px 15px; text-decoration: none; color: #333; @if(request('sort') == 'rating') background: #e8f8f5; color: #00b894; font-weight: 600; @endif">
-                            Đánh giá cao
+                            Rating cao
                         </a>
                     </li>
                 </ul>
@@ -76,7 +76,7 @@
             <!-- Product Count -->
             <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
                 <p style="color: #666; font-size: 14px;">
-                    Hiển thị <strong>{{ $products->count() }}</strong> / <strong>{{ $products->total() }}</strong> sản phẩm
+                    Show <strong>{{ $products->count() }}</strong> / <strong>{{ $products->total() }}</strong> products
                 </p>
             </div>
 
@@ -123,11 +123,11 @@
                             <!-- Price -->
                             <div style="display: flex; gap: 8px; margin-bottom: 10px;">
                                 <span style="font-size: 18px; font-weight: 900; color: #ff6b6b;">
-                                    {{ number_format($product->price, 0, ',', '.') }}₫
+                                    ${{ number_format($product->price, 2) }}
                                 </span>
                                 @if($product->original_price)
                                     <span style="font-size: 12px; text-decoration: line-through; color: #ccc;">
-                                        {{ number_format($product->original_price, 0, ',', '.') }}₫
+                                        ${{ number_format($product->original_price, 2) }}
                                     </span>
                                 @endif
                             </div>
@@ -138,7 +138,7 @@
                                    style="flex: 1; display: flex; align-items: center; justify-content: center; background: #00b894; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: 600; text-decoration: none; padding: 8px; transition: background 0.3s;"
                                    onmouseover="this.style.background='#00a080';"
                                    onmouseout="this.style.background='#00b894';">
-                                    <i class="fas fa-eye"></i> Chi tiết
+                                    <i class="fas fa-eye"></i> Details
                                 </a>
                                 <form action="{{ route('cart.add', $product->id) }}" method="POST" style="flex: 1;" class="add-to-cart-form">
                                     @csrf
@@ -146,7 +146,7 @@
                                             style="width: 100%; padding: 8px; background: #ff6b6b; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: 600; transition: background 0.3s;"
                                             onmouseover="this.style.background='#ff5252';"
                                             onmouseout="this.style.background='#ff6b6b';">
-                                        <i class="fas fa-shopping-cart"></i> Giỏ
+                                        <i class="fas fa-shopping-cart"></i> Cart
                                     </button>
                                 </form>
                             </div>
@@ -155,7 +155,7 @@
                 @empty
                     <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
                         <i class="fas fa-box" style="font-size: 48px; color: #ccc; margin-bottom: 10px;"></i>
-                        <p style="color: #999;">Không có sản phẩm nào</p>
+                        <p style="color: #999;">No products found</p>
                     </div>
                 @endforelse
             </div>

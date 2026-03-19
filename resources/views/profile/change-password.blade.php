@@ -7,7 +7,7 @@
             <div class="card shadow-lg">
                 <div class="card-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
                     <h3 class="mb-0">
-                        <i class="fas fa-key"></i> Đổi Mật Khẩu
+                        <i class="fas fa-key"></i> Change Password
                     </h3>
                 </div>
                 <div class="card-body">
@@ -27,7 +27,7 @@
 
                     @if($errors->any())
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle"></i> Kiểm tra lại các trường sau:
+                            <i class="fas fa-exclamation-circle"></i> Please check the following fields:
                             <ul class="mb-0 mt-2">
                                 @foreach($errors->all() as $error)
                                     <li>{{ $error }}</li>
@@ -38,7 +38,7 @@
                     @endif
 
                     <div class="alert alert-info alert-dismissible fade show" role="alert">
-                        <i class="fas fa-info-circle"></i> Để bảo mật tài khoản, vui lòng nhập mật khẩu hiện tại của bạn
+                        <i class="fas fa-info-circle"></i> For security, please enter your current password
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
 
@@ -47,7 +47,7 @@
                         @method('PUT')
 
                         <div class="form-group mb-4">
-                            <label for="current_password" class="form-label"><i class="fas fa-lock"></i> Mật Khẩu Hiện Tại</label>
+                            <label for="current_password" class="form-label"><i class="fas fa-lock"></i> Current Password</label>
                             <div class="input-group">
                                 <input type="password" 
                                        class="form-control @error('current_password') is-invalid @enderror" 
@@ -64,7 +64,7 @@
                         </div>
 
                         <div class="form-group mb-4">
-                            <label for="password" class="form-label"><i class="fas fa-lock-open"></i> Mật Khẩu Mới</label>
+                            <label for="password" class="form-label"><i class="fas fa-lock-open"></i> New Password</label>
                             <div class="input-group">
                                 <input type="password" 
                                        class="form-control @error('password') is-invalid @enderror" 
@@ -76,7 +76,7 @@
                                 </button>
                             </div>
                             <small class="text-muted d-block mt-2">
-                                Mật khẩu phải có ít nhất 6 ký tự
+                                Password must be at least 6 characters
                             </small>
                             @error('password')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -84,7 +84,7 @@
                         </div>
 
                         <div class="form-group mb-4">
-                            <label for="password_confirmation" class="form-label"><i class="fas fa-lock-open"></i> Xác Nhận Mật Khẩu</label>
+                            <label for="password_confirmation" class="form-label"><i class="fas fa-lock-open"></i> Confirm Password</label>
                             <div class="input-group">
                                 <input type="password" 
                                        class="form-control @error('password_confirmation') is-invalid @enderror" 
@@ -102,10 +102,10 @@
 
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-danger btn-lg">
-                                <i class="fas fa-check"></i> Cập Nhật Mật Khẩu
+                                <i class="fas fa-check"></i> Update Password
                             </button>
                             <a href="{{ route('profile.show') }}" class="btn btn-secondary btn-lg">
-                                <i class="fas fa-arrow-left"></i> Quay Lại
+                                <i class="fas fa-arrow-left"></i> Back
                             </a>
                         </div>
                     </form>

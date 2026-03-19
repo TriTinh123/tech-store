@@ -15,10 +15,10 @@ class ProductSeeder extends Seeder
     {
         // Disable foreign key checks
         \DB::statement('SET FOREIGN_KEY_CHECKS=0');
-
-        // Xóa tất cả sản phẩm cũ
+        
+        // Delete all existing products
         Product::truncate();
-
+        
         // Re-enable foreign key checks
         \DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
@@ -27,7 +27,7 @@ class ProductSeeder extends Seeder
             [
                 'name' => 'Apple MacBook Pro 16" M3 Max',
                 'slug' => Str::slug('Apple MacBook Pro 16 M3 Max'),
-                'description' => 'Laptop chuyên nghiệp với chip M3 Max, màn hình Retina 16 inch',
+                'description' => 'Professional laptop with M3 Max chip, 16-inch Retina display',
                 'category' => 'Laptop',
                 'price' => 3499.99,
                 'original_price' => 3999.99,
@@ -42,7 +42,7 @@ class ProductSeeder extends Seeder
             [
                 'name' => 'Dell XPS 15 Plus',
                 'slug' => Str::slug('Dell XPS 15 Plus'),
-                'description' => 'Laptop gaming mạnh mẽ với RTX 4080, Intel i9 gen 14',
+                'description' => 'Powerful gaming laptop with RTX 4080, Intel i9 gen 14',
                 'category' => 'Laptop',
                 'price' => 2799.99,
                 'original_price' => 3299.99,
@@ -57,7 +57,7 @@ class ProductSeeder extends Seeder
             [
                 'name' => 'ASUS ROG Zephyrus G16',
                 'slug' => Str::slug('ASUS ROG Zephyrus G16'),
-                'description' => 'Laptop gaming cao cấp với RTX 4090, tản nhiệt hiệu quả',
+                'description' => 'Premium gaming laptop with RTX 4090, efficient thermal cooling',
                 'category' => 'Laptop',
                 'price' => 3299.99,
                 'original_price' => 3799.99,
@@ -72,7 +72,7 @@ class ProductSeeder extends Seeder
             [
                 'name' => 'Lenovo ThinkPad X1 Carbon Gen 12',
                 'slug' => Str::slug('Lenovo ThinkPad X1 Carbon Gen 12'),
-                'description' => 'Laptop doanh nhân siêu nhẹ, bàn phím tuyệt vời',
+                'description' => 'Ultra-light business laptop with an excellent keyboard',
                 'category' => 'Laptop',
                 'price' => 1599.99,
                 'original_price' => 1899.99,
@@ -87,7 +87,7 @@ class ProductSeeder extends Seeder
             [
                 'name' => 'HP Spectre x360 16',
                 'slug' => Str::slug('HP Spectre x360 16'),
-                'description' => 'Laptop 2-in-1 chuyên dụng với màn hình OLED',
+                'description' => 'Versatile 2-in-1 laptop with OLED display',
                 'category' => 'Laptop',
                 'price' => 2199.99,
                 'original_price' => 2599.99,
@@ -102,7 +102,7 @@ class ProductSeeder extends Seeder
             [
                 'name' => 'Acer Swift 3 SF315-52G',
                 'slug' => Str::slug('Acer Swift 3 SF315-52G'),
-                'description' => 'Laptop mỏng nhẹ với hiệu suất tốt, giá cả phải chăng',
+                'description' => 'Slim and light laptop with good performance, affordable price',
                 'category' => 'Laptop',
                 'price' => 999.99,
                 'original_price' => 1299.99,
@@ -117,7 +117,7 @@ class ProductSeeder extends Seeder
             [
                 'name' => 'MSI Raider GE67 HX',
                 'slug' => Str::slug('MSI Raider GE67 HX'),
-                'description' => 'Laptop gaming tầm trung với RTX 4060, hiệu suất cân bằng',
+                'description' => 'Mid-range gaming laptop with RTX 4060, balanced performance',
                 'category' => 'Laptop',
                 'price' => 1799.99,
                 'original_price' => 2099.99,
@@ -130,12 +130,12 @@ class ProductSeeder extends Seeder
                 'reviews_count' => 234,
             ],
 
-            // ĐIỆN THOẠI
+            // SMARTPHONES
             [
                 'name' => 'iPhone 15 Pro Max',
                 'slug' => Str::slug('iPhone 15 Pro Max'),
-                'description' => 'Smartphone flagship Apple với chip A17 Pro, camera 48MP',
-                'category' => 'Điện thoại',
+                'description' => 'Apple flagship smartphone with A17 Pro chip, 48MP camera',
+                'category' => 'Smartphone',
                 'price' => 1299.99,
                 'original_price' => 1499.99,
                 'stock' => 40,
@@ -149,8 +149,8 @@ class ProductSeeder extends Seeder
             [
                 'name' => 'Samsung Galaxy S24 Ultra',
                 'slug' => Str::slug('Samsung Galaxy S24 Ultra'),
-                'description' => 'Smartphone Android mạnh nhất với Snapdragon 8 Gen 3',
-                'category' => 'Điện thoại',
+                'description' => 'Most powerful Android smartphone with Snapdragon 8 Gen 3',
+                'category' => 'Smartphone',
                 'price' => 1299.99,
                 'original_price' => 1499.99,
                 'stock' => 35,
@@ -164,8 +164,8 @@ class ProductSeeder extends Seeder
             [
                 'name' => 'Google Pixel 8 Pro',
                 'slug' => Str::slug('Google Pixel 8 Pro'),
-                'description' => 'Smartphone AI tuyệt vời với Tensor G3, camera xuất sắc',
-                'category' => 'Điện thoại',
+                'description' => 'Excellent AI smartphone with Tensor G3, outstanding camera',
+                'category' => 'Smartphone',
                 'price' => 999.99,
                 'original_price' => 1199.99,
                 'stock' => 28,
@@ -179,8 +179,8 @@ class ProductSeeder extends Seeder
             [
                 'name' => 'OnePlus 12',
                 'slug' => Str::slug('OnePlus 12'),
-                'description' => 'Smartphone hiệu suất cao với sạc nhanh 100W',
-                'category' => 'Điện thoại',
+                'description' => 'High-performance smartphone with 100W fast charging',
+                'category' => 'Smartphone',
                 'price' => 799.99,
                 'original_price' => 999.99,
                 'stock' => 32,
@@ -194,8 +194,8 @@ class ProductSeeder extends Seeder
             [
                 'name' => 'Xiaomi 14 Ultra',
                 'slug' => Str::slug('Xiaomi 14 Ultra'),
-                'description' => 'Smartphone camera giá tốt với Snapdragon 8 Gen 3 Leading',
-                'category' => 'Điện thoại',
+                'description' => 'Great camera smartphone with Snapdragon 8 Gen 3 Leading',
+                'category' => 'Smartphone',
                 'price' => 699.99,
                 'original_price' => 899.99,
                 'stock' => 45,
@@ -209,8 +209,8 @@ class ProductSeeder extends Seeder
             [
                 'name' => 'Samsung Galaxy A54 5G',
                 'slug' => Str::slug('Samsung Galaxy A54 5G'),
-                'description' => 'Smartphone tầm trung tốt với pin bền, giá hợp lý',
-                'category' => 'Điện thoại',
+                'description' => 'Good mid-range smartphone with long battery life, affordable price',
+                'category' => 'Smartphone',
                 'price' => 499.99,
                 'original_price' => 699.99,
                 'stock' => 55,
@@ -224,8 +224,8 @@ class ProductSeeder extends Seeder
             [
                 'name' => 'iPhone 15',
                 'slug' => Str::slug('iPhone 15'),
-                'description' => 'iPhone tiêu chuẩn mới với chip A16 Bionic, cổng USB-C',
-                'category' => 'Điện thoại',
+                'description' => 'New standard iPhone with A16 Bionic chip, USB-C port',
+                'category' => 'Smartphone',
                 'price' => 799.99,
                 'original_price' => 999.99,
                 'stock' => 50,

@@ -6,60 +6,79 @@ use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class PeripheralsSeeder extends Seeder
 {
     public function run(): void
     {
+        // Disable foreign key constraint checks
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        
+        // Truncate existing products to avoid duplicate slug errors
+        Product::query()->delete();
+        
+        // Re-enable foreign key constraint checks
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
         $peripheralsData = [
-            // PHỤ KIỆN NGOẠI VI (Peripherals)
-            ['name' => 'Logitech MX Master 3S', 'category' => 'peripherals', 'price' => 99.99, 'image' => '/images/logitech-MX master-3S.jpg'],
-            ['name' => 'Corsair K95 Platinum XT Mechanical Keyboard', 'category' => 'peripherals', 'price' => 199.99, 'image' => '/images/CorsairK95.jpg'],
-            ['name' => 'Razer DeathAdder V3 Gaming Mouse', 'category' => 'peripherals', 'price' => 69.99, 'image' => '/images/razer.jpg'],
-            ['name' => 'SteelSeries Arctis 9 Wireless Headset', 'category' => 'peripherals', 'price' => 329.99, 'image' => '/images/steelseries.jpg'],
-            ['name' => 'Logitech C920 Pro HD Webcam', 'category' => 'peripherals', 'price' => 79.99, 'image' => 'https://via.placeholder.com/300x300?text=Logitech+C920'],
+            // 🖥️ PERIPHERALS (spnv1–10)
+            ['name' => 'Computer Mouse',                         'category' => 'peripherals', 'price' =>  34.99, 'image' => '/images/spnv1.jpg'],
+            ['name' => 'RGB Keyboard',                           'category' => 'peripherals', 'price' =>  79.99, 'image' => '/images/spnv2.jpg'],
+            ['name' => 'HD Webcam',                              'category' => 'peripherals', 'price' =>  49.99, 'image' => '/images/spnv3.jpg'],
+            ['name' => 'Microphone / Headset with Mic',          'category' => 'peripherals', 'price' =>  59.99, 'image' => '/images/spnv4.jpg'],
+            ['name' => 'Graphics Tablet',                        'category' => 'peripherals', 'price' =>  89.99, 'image' => '/images/spnv5.jpg'],
+            ['name' => 'Computer Monitor',                       'category' => 'peripherals', 'price' => 299.99, 'image' => '/images/spnv6.jpg'],
+            ['name' => 'Computer Speakers',                      'category' => 'peripherals', 'price' =>  44.99, 'image' => '/images/spnv7.jpg'],
+            ['name' => 'Headphones / Headset',                   'category' => 'peripherals', 'price' =>  69.99, 'image' => '/images/spnv8.jpg'],
+            ['name' => 'Printer',                                'category' => 'peripherals', 'price' => 199.99, 'image' => '/images/spnv9.jpg'],
+            ['name' => 'Scanner',                                'category' => 'peripherals', 'price' => 149.99, 'image' => '/images/spnv10.jpg'],
 
-            // LƯU TRỮ & KẾT NỐI (Storage)
-            ['name' => 'Samsung 870 QVO 1TB SSD', 'category' => 'storage', 'price' => 79.99, 'image' => 'https://via.placeholder.com/300x300?text=Samsung+SSD+870'],
-            ['name' => 'WD My Passport 2TB External HDD', 'category' => 'storage', 'price' => 59.99, 'image' => 'https://via.placeholder.com/300x300?text=WD+Passport+2TB'],
-            ['name' => 'Seagate Barracuda 4TB External Drive', 'category' => 'storage', 'price' => 89.99, 'image' => 'https://via.placeholder.com/300x300?text=Seagate+Barracuda'],
-            ['name' => 'Anker USB-C Hub 7-in-1', 'category' => 'storage', 'price' => 39.99, 'image' => 'https://via.placeholder.com/300x300?text=Anker+USB+Hub'],
-            ['name' => 'SanDisk Extreme 64GB USB 3.1', 'category' => 'storage', 'price' => 19.99, 'image' => 'https://via.placeholder.com/300x300?text=SanDisk+USB'],
+            // 🧰 STORAGE & CONNECTIVITY (splt1–10)
+            ['name' => 'USB Flash Drive',                        'category' => 'storage', 'price' =>  19.99, 'image' => '/images/splt1.jpg'],
+            ['name' => 'External SSD Drive',                     'category' => 'storage', 'price' =>  89.99, 'image' => '/images/splt2.jpg'],
+            ['name' => 'External HDD Drive',                     'category' => 'storage', 'price' =>  69.99, 'image' => '/images/splt3.jpg'],
+            ['name' => 'Docking Station',                        'category' => 'storage', 'price' => 129.99, 'image' => '/images/splt4.jpg'],
+            ['name' => 'Multi-Port USB Hub',                     'category' => 'storage', 'price' =>  39.99, 'image' => '/images/splt5.jpg'],
+            ['name' => 'Card Reader',                            'category' => 'storage', 'price' =>  14.99, 'image' => '/images/splt6.jpg'],
+            ['name' => 'USB Cable',                              'category' => 'storage', 'price' =>   9.99, 'image' => '/images/splt7.jpg'],
+            ['name' => 'HDMI Cable',                             'category' => 'storage', 'price' =>  12.99, 'image' => '/images/splt8.jpg'],
+            ['name' => 'DisplayPort Cable',                      'category' => 'storage', 'price' =>  15.99, 'image' => '/images/splt9.jpg'],
+            ['name' => 'Ethernet Network Cable',                 'category' => 'storage', 'price' =>  11.99, 'image' => '/images/splt10.jpg'],
 
-            // NGUỒN & LÀM MÁT (Power)
-            ['name' => 'APC Back-UPS Pro 1500VA', 'category' => 'power', 'price' => 179.99, 'image' => 'https://via.placeholder.com/300x300?text=APC+UPS'],
-            ['name' => 'Corsair RM750e 750W Gold Power Supply', 'category' => 'power', 'price' => 89.99, 'image' => 'https://via.placeholder.com/300x300?text=Corsair+PSU+750W'],
-            ['name' => 'Noctua NH-D15 CPU Cooler', 'category' => 'power', 'price' => 99.99, 'image' => 'https://via.placeholder.com/300x300?text=Noctua+Cooler'],
-            ['name' => 'Be Quiet! Dark Rock Pro 4 Cooler', 'category' => 'power', 'price' => 89.99, 'image' => 'https://via.placeholder.com/300x300?text=Be+Quiet+Cooler'],
-            ['name' => 'ASUS TUF Gaming Cooler Pad', 'category' => 'power', 'price' => 49.99, 'image' => 'https://via.placeholder.com/300x300?text=ASUS+Cooler+Pad'],
+            // ⚡ POWER & COOLING (spd1–3)
+            ['name' => 'UPS Battery Backup',                     'category' => 'power', 'price' => 179.99, 'image' => '/images/spd1.jpg'],
+            ['name' => 'External Cooling Fan',                   'category' => 'power', 'price' =>  34.99, 'image' => '/images/spd2.jpg'],
+            ['name' => 'Laptop Cooling Pad',                     'category' => 'power', 'price' =>  49.99, 'image' => '/images/spd3.jpg'],
 
-            // BẢO VỆ & TRANG TRÍ (Protection)
-            ['name' => 'SteelSeries QcK Heavy Mousepad', 'category' => 'protection', 'price' => 44.99, 'image' => 'https://via.placeholder.com/300x300?text=SteelSeries+Mousepad'],
-            ['name' => 'Razer Basilisk Ultimate Dock + Mousepad', 'category' => 'protection', 'price' => 99.99, 'image' => 'https://via.placeholder.com/300x300?text=Razer+Dock'],
-            ['name' => 'Lamicall Laptop Stand Aluminum', 'category' => 'protection', 'price' => 34.99, 'image' => 'https://via.placeholder.com/300x300?text=Lamicall+Stand'],
-            ['name' => 'Corsair Vengeance RGB PRO Case', 'category' => 'protection', 'price' => 139.99, 'image' => 'https://via.placeholder.com/300x300?text=Corsair+Case'],
-            ['name' => 'Cable Matters USB-A Cable 2-Pack', 'category' => 'protection', 'price' => 14.99, 'image' => 'https://via.placeholder.com/300x300?text=Cable+Matters'],
+            // 🪶 PROTECTION & DECORATION (spbv1–8)
+            ['name' => 'Mouse Pad',                              'category' => 'protection', 'price' =>  19.99, 'image' => '/images/spbv1.jpg'],
+            ['name' => 'Laptop Protective Film',                 'category' => 'protection', 'price' =>  14.99, 'image' => '/images/spbv2.jpg'],
+            ['name' => 'Laptop Protective Sleeve',               'category' => 'protection', 'price' =>  24.99, 'image' => '/images/spbv3.jpg'],
+            ['name' => 'Laptop Stand',                           'category' => 'protection', 'price' =>  34.99, 'image' => '/images/spbv4.jpg'],
+            ['name' => 'Laptop Cooling Stand',                   'category' => 'protection', 'price' =>  44.99, 'image' => '/images/spbv5.jpg'],
+            ['name' => 'PC Case',                                'category' => 'protection', 'price' => 139.99, 'image' => '/images/spbv6.jpg'],
+            ['name' => 'PC Case Accessories',                    'category' => 'protection', 'price' =>  29.99, 'image' => '/images/spbv7.jpg'],
+            ['name' => 'Cable Management Accessories',           'category' => 'protection', 'price' =>  19.99, 'image' => '/images/spbv8.jpg'],
 
-            // GAMING
-            ['name' => 'Xbox Series X Wireless Controller', 'category' => 'gaming', 'price' => 69.99, 'image' => 'https://via.placeholder.com/300x300?text=Xbox+Controller'],
-            ['name' => 'Sony PlayStation 5 DualSense Controller', 'category' => 'gaming', 'price' => 74.99, 'image' => 'https://via.placeholder.com/300x300?text=PS5+Controller'],
-            ['name' => 'Secretlab Omega 2022 Gaming Chair', 'category' => 'gaming', 'price' => 399.99, 'image' => 'https://via.placeholder.com/300x300?text=Secretlab+Chair'],
-            ['name' => 'Herman Miller x Logitech Gaming Chair', 'category' => 'gaming', 'price' => 1495.00, 'image' => 'https://via.placeholder.com/300x300?text=Herman+Miller+Chair'],
-            ['name' => 'Razer Mouse Bungee v3', 'category' => 'gaming', 'price' => 34.99, 'image' => 'https://via.placeholder.com/300x300?text=Razer+Bungee'],
+            // 🎮 GAMING (spg1–6)
+            ['name' => 'Gamepad',                               'category' => 'gaming', 'price' =>  69.99, 'image' => '/images/spg1.jpg'],
+            ['name' => 'Joystick',                               'category' => 'gaming', 'price' =>  49.99, 'image' => '/images/spg2.jpg'],
+            ['name' => 'Mouse Bungee',                           'category' => 'gaming', 'price' =>  34.99, 'image' => '/images/spg3.jpg'],
+            ['name' => 'Professional Gaming Chair',              'category' => 'gaming', 'price' => 399.99, 'image' => '/images/spg4.jpg'],
+            ['name' => 'Gaming Lumbar Support Pillow',           'category' => 'gaming', 'price' =>  44.99, 'image' => '/images/spg5.jpg'],
+            ['name' => 'VR Controller',                          'category' => 'gaming', 'price' => 249.99, 'image' => '/images/spg6.jpg'],
 
-            // BẢO MẬT (Security)
-            ['name' => 'Kensington Laptop Lock Cable', 'category' => 'security', 'price' => 24.99, 'image' => 'https://via.placeholder.com/300x300?text=Kensington+Lock'],
-            ['name' => 'YubiKey 5 Series USB Security Key', 'category' => 'security', 'price' => 45.00, 'image' => 'https://via.placeholder.com/300x300?text=YubiKey+5'],
-            ['name' => 'Kingston IronKey 32GB Encrypted USB', 'category' => 'security', 'price' => 54.99, 'image' => 'https://via.placeholder.com/300x300?text=Kingston+IronKey'],
-            ['name' => 'Fellowes MFP Hard Drive Security Lock', 'category' => 'security', 'price' => 34.99, 'image' => 'https://via.placeholder.com/300x300?text=Fellowes+Lock'],
-            ['name' => 'Targus Defcon Cable Lock', 'category' => 'security', 'price' => 29.99, 'image' => 'https://via.placeholder.com/300x300?text=Targus+Lock'],
+            // 🔒 SECURITY (spbm1–4)
+            ['name' => 'Laptop Security Lock',                   'category' => 'security', 'price' =>  24.99, 'image' => '/images/spbm1.jpg'],
+            ['name' => 'Security Cable Lock',                    'category' => 'security', 'price' =>  19.99, 'image' => '/images/spbm2.jpg'],
+            ['name' => 'USB Security Lock',                      'category' => 'security', 'price' =>  29.99, 'image' => '/images/spbm3.jpg'],
+            ['name' => 'Hardware Security Token',                'category' => 'security', 'price' =>  49.99, 'image' => '/images/spbm4.jpg'],
 
-            // VĂN PHÒNG (Office)
-            ['name' => '3M Document Holder Stand', 'category' => 'office', 'price' => 29.99, 'image' => 'https://via.placeholder.com/300x300?text=3M+Document+Holder'],
-            ['name' => 'Fellowes Powershred 79Ci Cross-Cut Paper Shredder', 'category' => 'office', 'price' => 199.99, 'image' => 'https://via.placeholder.com/300x300?text=Fellowes+Shredder'],
-            ['name' => 'Smart Board Pro 86" Interactive Display', 'category' => 'office', 'price' => 5999.99, 'image' => 'https://via.placeholder.com/300x300?text=SmartBoard+Pro'],
-            ['name' => 'Elago Desktop Organizer', 'category' => 'office', 'price' => 19.99, 'image' => 'https://via.placeholder.com/300x300?text=Elago+Organizer'],
-            ['name' => 'AmazonBasics Adjustable Monitor Stand Riser', 'category' => 'office', 'price' => 34.99, 'image' => 'https://via.placeholder.com/300x300?text=Monitor+Stand'],
+            // 🖨️ OFFICE (spvp1–4)
+            ['name' => 'Document Holder',                        'category' => 'office', 'price' =>  24.99, 'image' => '/images/spvp1.jpg'],
+            ['name' => 'Copy Stand',                             'category' => 'office', 'price' =>  34.99, 'image' => '/images/spvp2.jpg'],
+            ['name' => 'Document Shredder',                      'category' => 'office', 'price' => 199.99, 'image' => '/images/spvp3.jpg'],
+            ['name' => 'Interactive Whiteboard',                 'category' => 'office', 'price' => 599.99, 'image' => '/images/spvp4.jpg'],
         ];
 
         foreach ($peripheralsData as $product) {
@@ -68,7 +87,7 @@ class PeripheralsSeeder extends Seeder
             Product::create([
                 'name' => $product['name'],
                 'slug' => Str::slug($product['name']),
-                'description' => 'Sản phẩm phụ kiện máy tính chất lượng cao',
+                'description' => 'High-quality computer accessory',
                 'category_id' => $category?->id,
                 'price' => $product['price'],
                 'original_price' => $product['price'] * 1.15,

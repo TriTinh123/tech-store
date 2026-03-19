@@ -7,13 +7,13 @@
             <div class="card shadow-lg">
                 <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                     <h3 class="mb-0">
-                        <i class="fas fa-edit"></i> Sửa Thông Tin Cá Nhân
+                        <i class="fas fa-edit"></i> Edit Personal Info
                     </h3>
                 </div>
                 <div class="card-body">
                     @if($errors->any())
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle"></i> Kiểm tra lại các trường sau:
+                            <i class="fas fa-exclamation-circle"></i> Please check the following fields:
                             <ul class="mb-0 mt-2">
                                 @foreach($errors->all() as $error)
                                     <li>{{ $error }}</li>
@@ -28,7 +28,7 @@
                         @method('PUT')
 
                         <div class="form-group mb-4">
-                            <label for="name" class="form-label"><i class="fas fa-user"></i> Tên Đầy Đủ</label>
+                            <label for="name" class="form-label"><i class="fas fa-user"></i> Full Name</label>
                             <input type="text" 
                                    class="form-control @error('name') is-invalid @enderror" 
                                    id="name" 
@@ -54,7 +54,7 @@
                         </div>
 
                         <div class="form-group mb-4">
-                            <label for="phone" class="form-label"><i class="fas fa-phone"></i> Điện Thoại</label>
+                            <label for="phone" class="form-label"><i class="fas fa-phone"></i> Phone</label>
                             <input type="tel" 
                                    class="form-control @error('phone') is-invalid @enderror" 
                                    id="phone" 
@@ -67,12 +67,12 @@
                         </div>
 
                         <div class="form-group mb-4">
-                            <label for="address" class="form-label"><i class="fas fa-map-marker-alt"></i> Địa Chỉ</label>
+                            <label for="address" class="form-label"><i class="fas fa-map-marker-alt"></i> Address</label>
                             <textarea class="form-control @error('address') is-invalid @enderror" 
                                       id="address" 
                                       name="address" 
                                       rows="3" 
-                                      placeholder="Nhập địa chỉ của bạn">{{ old('address', $user->address) }}</textarea>
+                                      placeholder="Enter your address">{{ old('address', $user->address) }}</textarea>
                             @error('address')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -80,10 +80,10 @@
 
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-save"></i> Lưu Thay Đổi
+                                <i class="fas fa-save"></i> Save Changes
                             </button>
                             <a href="{{ route('profile.show') }}" class="btn btn-secondary btn-lg">
-                                <i class="fas fa-times"></i> Hủy
+                                <i class="fas fa-times"></i> Cancel
                             </a>
                         </div>
                     </form>

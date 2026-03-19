@@ -2,1117 +2,356 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ChatbotAnalytic;
-use App\Models\ChatbotConversation;
-use App\Models\ChatbotMessage;
-use App\Models\Coupon;
-use App\Models\FAQ;
-use App\Models\Order;
-use App\Models\Product;
-use App\Models\SuspiciousLogin;
-use App\Models\UserPreference;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use OpenAI;
 
 class ChatbotController extends Controller
 {
-    /**
-     * Start or get existing conversation
-     */
-    public function startConversation(Request $request)
+    private string $systemPrompt = <<<'PROMPT'
+You are TechBot — the intelligent, friendly, expert shopping assistant of TechStore, a leading Vietnamese e-commerce store specializing in technology devices and accessories.
+
+━━━ STORE INFORMATION ━━━
+- Free shipping on orders from 500,000₫ | Delivery: 1–2 days HN/HCM, 2–5 days nationwide.
+- Express shipping available (same-day HN/HCM, extra 30,000₫).
+- Free returns within 7 days of receipt | 100% refund for defective/wrong items.
+- Payment methods: COD (cash on delivery), bank transfer, MoMo, VNPay, ZaloPay, Visa/Mastercard.
+- Official manufacturer warranty: 12 months (premium products up to 24 months).
+- New member discount: 10% off first order with code WELCOME10.
+- Flash sale every day 12:00–14:00 and 20:00–22:00.
+- Customer support: Hotline 1800-xxxx (8am–10pm Mon–Sun) | Email: support@techstore.vn
+- Useful links: /products (browse), /cart (cart), /orders (order history), /register (sign up), /login (log in), /forgot-password (reset password), /lien-he (contact)
+
+━━━ PRODUCT CATEGORIES ━━━
+- Laptops: Gaming laptops (ASUS ROG, Lenovo Legion, MSI), Ultrabooks (Dell XPS, MacBook Air/Pro, LG Gram), Business laptops (HP EliteBook, Lenovo ThinkPad). Price range: 8–80 million VND.
+- Smartphones: iPhone (14/15/16 series), Samsung (Galaxy S/A series), OPPO, Xiaomi, Vivo. Price range: 2–50 million VND.
+- Earphones/Headphones: True wireless (AirPods, Samsung Buds, Sony WF), Over-ear (Sony WH-1000XM5, Bose QC45). Price range: 200k–10 million VND.
+- Keyboards: Mechanical gaming keyboards (Logitech, Razer, Corsair), Office keyboards. Price range: 300k–5 million VND.
+- Monitors: Gaming (144Hz–360Hz), Professional 4K, Ultrawide. Price range: 3–30 million VND.
+- Accessories: Mouse, webcam, charger, cable, bag, stand, hub, SSD, RAM. Price range: 50k–3 million VND.
+- Smart home: Smart speaker, smart bulb, security camera, smart watch.
+
+━━━ BUYING ADVICE GUIDELINES ━━━
+- Laptops for students: Recommend affordable ultrabooks (Acer Swift, ASUS VivoBook) under 15 million.
+- Laptops for gaming: Recommend RTX 4060/4070 models, ask about budget first.
+- Laptops for office/work: Recommend ThinkPad, HP ProBook or MacBook Air for longevity.
+- For earphones: Ask noise cancellation preference, wired vs wireless.
+- For monitors: Ask use case (gaming vs editing vs office), screen size preference.
+- Always recommend checking current promotions before purchase.
+
+━━━ PERSONALITY ━━━
+- Warm, helpful, and natural — like a knowledgeable friend at a tech store.
+- Be conversational but concise — don't over-explain, give actionable answers.
+- Use relevant emojis naturally (don't overdo it) — max 2–3 per message.
+- When recommending products, mention 2–3 specific options with brief pros.
+- If asked about price, give a range and suggest checking the site for current price.
+- If unsure, direct to hotline or website — never make up specs or prices.
+- Only answer questions related to TechStore products, orders, account, shipping, payment, warranty, promotions, and tech advice.
+- If asked about yourself: you are TechBot, a smart AI shopping assistant by TechStore — do not mention any underlying AI model.
+
+━━━ RESPONSE FORMAT ━━━
+- Keep responses under 200 words unless explaining a buying guide.
+- Use **bold** for important info (prices, model names, timeframes).
+- Use numbered lists for step-by-step instructions.
+- Use bullet points for comparisons.
+- Include relevant /links when helpful.
+
+━━━ ⚠️ LANGUAGE RULE — ABSOLUTE PRIORITY ━━━
+You MUST detect the language of the user's LATEST message and reply in THAT EXACT SAME LANGUAGE.
+- User writes in ENGLISH → entire reply in ENGLISH only.
+- User writes in VIETNAMESE → entire reply in VIETNAMESE only.
+- User writes in another language → reply in that language.
+- NEVER mix languages in one reply.
+- This rule overrides ALL other instructions. Always match the current message's language.
+PROMPT;
+
+    public function clear()
     {
-        $user = Auth::user();
-
-        // Get or create user preferences
-        if ($user) {
-            UserPreference::firstOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'favorite_categories' => [],
-                    'price_range' => ['min' => 0, 'max' => 100000000],
-                    'viewed_products' => [],
-                ]
-            );
-        }
-
-        // Create new conversation
-        $conversation = ChatbotConversation::create([
-            'user_id' => $user?->id,
-            'topic' => $request->input('topic', 'general'),
-            'message_count' => 0,
-        ]);
-
-        // Build personalized greeting message
-        $userName = 'bạn';
-        if ($user) {
-            $fullName = trim($user->name);
-            // Check if name has space
-            if (strpos($fullName, ' ') !== false) {
-                // Has space: take last name (Nguyễn Tinh -> Tinh) - Vietnamese naming convention
-                $nameParts = explode(' ', $fullName);
-                $userName = end($nameParts) ?: 'bạn';
-            } else {
-                // No space: use full name (NguyễnTinh -> NguyễnTinh)
-                $userName = $fullName;
-            }
-        }
-
-        $greeting = "Xin chào $userName! 👋\nMình có thể giúp gì cho bạn? 😊\nMình hỗ trợ:\n💻 Tìm sản phẩm phù hợp\n💰 So sánh giá và tính năng\n🛒 Hỗ trợ mua sắm\n❓ Trả lời câu hỏi\n🎁 Mã giảm giá";
-
-        return response()->json([
-            'success' => true,
-            'conversation_id' => $conversation->id,
-            'user_name' => $userName,
-            'user_full_name' => $user?->name,
-            'message' => $greeting,
-        ]);
+        session()->forget('chatbot_history');
+        return response()->json(['ok' => true]);
     }
 
-    /**
-     * Send message to chatbot
-     */
-    public function sendMessage(Request $request)
+    // ── Rule-based fallback (when OpenAI errors/quota exceeded) ───────────────
+    private array $intents = [
+        'greeting'    => ['xin chào','hello','hi','chào','hey','helo','alo','good morning','good afternoon','chào buổi'],
+        'shipping'    => ['giao hàng','ship','vận chuyển','delivery','freeship','phí ship','thời gian giao','bao lâu giao','nhanh không','free ship'],
+        'return'      => ['đổi trả','hoàn trả','trả hàng','return','refund','hoàn tiền','hàng lỗi','đổi hàng','bị hỏng','sản phẩm lỗi'],
+        'payment'     => ['thanh toán','payment','momo','vnpay','visa','atm','cod','chuyển khoản','zalopay','trả tiền','cách thanh toán'],
+        'warranty'    => ['bảo hành','warranty','sửa chữa','bảo trì','hỏng','vấn đề kỹ thuật'],
+        'promo'       => ['khuyến mãi','giảm giá','sale','coupon','mã giảm','voucher','discount','ưu đãi','flash sale','mã code'],
+        'account'     => ['tài khoản','đăng ký','đăng nhập','mật khẩu','account','login','register','quên mật khẩu','đổi mật khẩu','xác thực'],
+        'order'       => ['đơn hàng','order','theo dõi','track','trạng thái','đơn của tôi','kiểm tra đơn'],
+        'cancel'      => ['hủy đơn','cancel','hủy hàng','không muốn mua nữa','hủy order'],
+        'product'     => ['sản phẩm','mua','đặt hàng','giá','tìm kiếm','xem hàng'],
+        'laptop'      => ['laptop','máy tính','notebook','macbook','gaming','ultrabook','lenovo','dell','asus','hp','acer','msi'],
+        'phone'       => ['điện thoại','iphone','samsung','smartphone','android','oppo','xiaomi','vivo','phone'],
+        'earphone'    => ['tai nghe','airpods','earphone','headphone','earbud','âm thanh','bass','noise cancel'],
+        'keyboard'    => ['bàn phím','keyboard','mechanical','gaming keyboard','logitech','razer','corsair'],
+        'monitor'     => ['màn hình','monitor','display','4k','144hz','gaming monitor','ultrawide'],
+        'accessory'   => ['phụ kiện','chuột','mouse','webcam','sạc','cáp','túi','balo','đế tản nhiệt','hub','ssd','ram'],
+        'compare'     => ['so sánh','khác gì','tốt hơn','nên mua','lựa chọn','compare','versus','vs','hay hơn'],
+        'recommend'   => ['tư vấn','gợi ý','nên mua','recommend','phù hợp','loại nào','cái nào tốt','mua gì'],
+        'contact'     => ['liên hệ','hotline','hỗ trợ','contact','support','gặp nhân viên','tư vấn viên','gọi điện'],
+        'thanks'      => ['cảm ơn','thank','thanks','cám ơn','oke','ok','được rồi','hiểu rồi','biết rồi'],
+        'buy_help'    => ['giúp mua','hướng dẫn mua','mua như thế nào','cách mua','mua hàng','đặt hàng giúp','hướng dẫn đặt hàng'],
+        'security'    => ['bảo mật','xác thực','otp','2fa','3fa','an toàn tài khoản','mất tài khoản','bị hack','security'],
+    ];
+
+    private array $responses = [
+        'greeting' => [
+            'vi' => ["👋 Xin chào! Mình là **TechBot**, trợ lý AI của TechStore. Bạn đang cần tìm gì hôm nay? 😊\n\nMình có thể giúp: **tư vấn sản phẩm** 💻📱, **đơn hàng** 📦, **giao hàng** 🚚, **bảo hành** 🛡️, **khuyến mãi** 🎉"],
+            'en' => ["👋 Hello! I'm **TechBot**, TechStore's AI shopping assistant. What can I help you with today? 😊\n\nI can assist with: **product advice** 💻📱, **orders** 📦, **shipping** 🚚, **warranty** 🛡️, **promotions** 🎉"],
+        ],
+        'shipping' => [
+            'vi' => ["🚚 **Chính sách giao hàng TechStore:**\n\n- **Miễn phí** cho đơn từ **500,000₫**\n- Nội thành HN/HCM: **1–2 ngày**\n- Tỉnh thành khác: **2–5 ngày** làm việc\n- Giao hàng nhanh cùng ngày (HN/HCM): thêm **30,000₫**\n\nSau khi đặt hàng bạn sẽ nhận mã tracking qua email 📧"],
+            'en' => ["🚚 **TechStore Shipping Policy:**\n\n- **Free** on orders from **500,000₫**\n- Inner-city HN/HCM: **1–2 days**\n- Other provinces: **2–5 working days**\n- Same-day express (HN/HCM): +**30,000₫**\n\nTracking code sent by email after order confirmation 📧"],
+        ],
+        'return' => [
+            'vi' => ["🔄 **Chính sách đổi trả:**\n\n- Đổi trả miễn phí trong **7 ngày** kể từ khi nhận hàng\n- Hàng lỗi kỹ thuật / sai sản phẩm: **hoàn tiền 100%**\n- Hàng nguyên đai nguyên kiện để được hỗ trợ tốt nhất\n\nCách yêu cầu: [Đơn hàng của tôi](/orders) → chọn đơn → **Yêu cầu đổi trả**\nHoặc gọi hotline **1800-xxxx** 📞"],
+            'en' => ["🔄 **Return Policy:**\n\n- Free returns within **7 days** of receipt\n- Defective/wrong items: **100% refund**\n- Keep original packaging for best support\n\nHow to request: [My Orders](/orders) → select order → **Request Return**\nOr call hotline **1800-xxxx** 📞"],
+        ],
+        'payment' => [
+            'vi' => ["💳 **Phương thức thanh toán:**\n\n- 💵 **COD** — thanh toán khi nhận hàng\n- 🏦 **Chuyển khoản** ngân hàng\n- 📱 **MoMo, VNPay, ZaloPay**\n- 💳 **Visa / Mastercard** (thanh toán quốc tế)\n\nMọi giao dịch được mã hóa bảo mật SSL 🔒"],
+            'en' => ["💳 **Payment Methods:**\n\n- 💵 **COD** — pay on delivery\n- 🏦 **Bank transfer**\n- 📱 **MoMo, VNPay, ZaloPay**\n- 💳 **Visa / Mastercard** (international)\n\nAll transactions secured with SSL encryption 🔒"],
+        ],
+        'warranty' => [
+            'vi' => ["🛡️ **Bảo hành chính hãng:**\n\n- Sản phẩm thông thường: **12 tháng**\n- Sản phẩm cao cấp (MacBook, iPhone, Sony...): **24 tháng**\n- Phụ kiện: **6–12 tháng**\n\nGặp vấn đề kỹ thuật? Liên hệ hotline **1800-xxxx** — TechStore hỗ trợ miễn phí 🆓"],
+            'en' => ["🛡️ **Official Warranty:**\n\n- Standard products: **12 months**\n- Premium products (MacBook, iPhone, Sony...): **24 months**\n- Accessories: **6–12 months**\n\nTechnical issue? Call hotline **1800-xxxx** — free support from TechStore 🆓"],
+        ],
+        'promo' => [
+            'vi' => ["🎉 **Ưu đãi TechStore:**\n\n- 🆕 Thành viên mới: giảm **10%** đơn đầu với mã **WELCOME10**\n- ⚡ Flash sale hằng ngày: **12:00–14:00** và **20:00–22:00**\n- 🎁 Tặng quà kèm đơn từ 2 triệu₫\n- 📧 Đăng ký email nhận thông báo sale sớm nhất\n\nXem tất cả ưu đãi tại [Cửa hàng](/products) 👀"],
+            'en' => ["🎉 **TechStore Promotions:**\n\n- 🆕 New members: **10% off** first order with code **WELCOME10**\n- ⚡ Daily flash sales: **12:00–14:00** and **20:00–22:00**\n- 🎁 Free gift with orders over 2 million₫\n- 📧 Subscribe to email for early sale alerts\n\nSee all deals at [Store](/products) 👀"],
+        ],
+        'account' => [
+            'vi' => ["👤 **Tài khoản TechStore:**\n\n- [Đăng ký](/register) miễn phí — chỉ 1 phút\n- Quên mật khẩu? → [Đặt lại mật khẩu](/forgot-password)\n- Đổi mật khẩu: Hồ sơ → Bảo mật → Đổi mật khẩu\n\nVẫn không vào được? Gọi hotline **1800-xxxx** 📞"],
+            'en' => ["👤 **TechStore Account:**\n\n- [Sign up](/register) for free — takes 1 minute\n- Forgot password? → [Reset Password](/forgot-password)\n- Change password: Profile → Security → Change Password\n\nStill locked out? Call hotline **1800-xxxx** 📞"],
+        ],
+        'order' => [
+            'vi' => ["📦 **Theo dõi đơn hàng:**\n\n1. Đăng nhập → [Đơn hàng của tôi](/orders)\n2. Chọn đơn cần xem → xem trạng thái realtime\n3. Mã tracking cũng được gửi qua **email** sau khi xác nhận\n\nĐơn đang xử lý có thể hủy trong **2 giờ** đầu sau khi đặt 🕐"],
+            'en' => ["📦 **Track Your Order:**\n\n1. Log in → [My Orders](/orders)\n2. Select your order → view real-time status\n3. Tracking code also sent by **email** after confirmation\n\nPending orders can be cancelled within **2 hours** of placing 🕐"],
+        ],
+        'cancel' => [
+            'vi' => ["❌ **Hủy đơn hàng:**\n\n- Đơn **đang xử lý**: hủy trong vòng **2 giờ** qua [Đơn hàng](/orders)\n- Đơn **đang giao**: liên hệ hotline **1800-xxxx ngay** để can thiệp kịp thời\n- Đơn **đã giao**: dùng chính sách [đổi trả](/orders) trong 7 ngày\n\n⚠️ Hủy sớm giúp hoàn tiền nhanh hơn!"],
+            'en' => ["❌ **Cancel an Order:**\n\n- Order **processing**: cancel within **2 hours** via [My Orders](/orders)\n- Order **being shipped**: call hotline **1800-xxxx immediately**\n- Order **delivered**: use the [return policy](/orders) within 7 days\n\n⚠️ Cancelling early = faster refund!"],
+        ],
+        'product' => [
+            'vi' => ["🛒 Xem tất cả sản phẩm tại [Cửa hàng](/products)\n\n**Danh mục nổi bật:**\n- 💻 Laptop (8–80 triệu₫)\n- 📱 Điện thoại (2–50 triệu₫)\n- 🎧 Tai nghe (200k–10 triệu₫)\n- ⌨️ Bàn phím & Chuột\n- 🖥️ Màn hình\n\nBạn đang tìm kiếm sản phẩm gì? Mình có thể tư vấn cụ thể hơn! 😊"],
+            'en' => ["🛒 Browse all products at [Store](/products)\n\n**Top categories:**\n- 💻 Laptops (8–80M₫)\n- 📱 Smartphones (2–50M₫)\n- 🎧 Earphones (200k–10M₫)\n- ⌨️ Keyboards & Mice\n- 🖥️ Monitors\n\nWhat product are you looking for? I can give more specific advice! 😊"],
+        ],
+        'laptop' => [
+            'vi' => ["💻 **Tư vấn laptop TechStore:**\n\n🎮 **Gaming**: ASUS ROG, Lenovo Legion, MSI — từ **18 triệu₫**\n📚 **Sinh viên / văn phòng**: ASUS VivoBook, Acer Swift, Dell Inspiron — từ **10 triệu₫**\n✈️ **Ultrabook mỏng nhẹ**: MacBook Air, LG Gram, Dell XPS — từ **22 triệu₫**\n💼 **Doanh nghiệp**: ThinkPad, HP EliteBook — từ **20 triệu₫**\n\nBạn dùng laptop cho mục đích gì? Mình tư vấn cụ thể hơn nhé 💡"],
+            'en' => ["💻 **Laptop Recommendations:**\n\n🎮 **Gaming**: ASUS ROG, Lenovo Legion, MSI — from **18M₫**\n📚 **Student/Office**: ASUS VivoBook, Acer Swift, Dell Inspiron — from **10M₫**\n✈️ **Ultrabooks**: MacBook Air, LG Gram, Dell XPS — from **22M₫**\n💼 **Business**: ThinkPad, HP EliteBook — from **20M₫**\n\nWhat's your main use case? I'll give a more specific recommendation 💡"],
+        ],
+        'phone' => [
+            'vi' => ["📱 **Tư vấn điện thoại:**\n\n🍎 **iPhone**: 14 (17M₫), 15 (22M₫), 16 (27M₫) — hệ sinh thái Apple, camera tốt\n📸 **Samsung**: Galaxy S24 (25M₫), A55 (12M₫) — màn hình đẹp, nhiều tùy chọn\n💰 **Tầm trung**: OPPO Reno11, Xiaomi 14T — hiệu năng tốt, giá hợp lý (7–12M₫)\n\nBạn ưu tiên camera, hiệu năng hay pin? Mình tư vấn thêm nhé 😊"],
+            'en' => ["📱 **Smartphone Recommendations:**\n\n🍎 **iPhone**: 14 (17M₫), 15 (22M₫), 16 (27M₫) — Apple ecosystem, great camera\n📸 **Samsung**: Galaxy S24 (25M₫), A55 (12M₫) — beautiful display, versatile\n💰 **Mid-range**: OPPO Reno11, Xiaomi 14T — great performance, reasonable price (7–12M₫)\n\nWhat do you prioritize: camera, performance, or battery? 😊"],
+        ],
+        'earphone' => [
+            'vi' => ["🎧 **Tư vấn tai nghe:**\n\n🔇 **Chống ồn tốt nhất**: Sony WH-1000XM5 (8M₫), Bose QC45 (7M₫)\n🎵 **True wireless phổ biến**: AirPods Pro 2 (6M₫), Samsung Buds2 Pro (3.5M₫), Sony WF-1000XM5 (5.5M₫)\n💰 **Tầm trung tốt**: Jabra Elite 4 (2M₫), Anker Soundcore (600k–1.5M₫)\n\nBạn muốn tai nghe in-ear hay over-ear? Có cần chống ồn không? 🎶"],
+            'en' => ["🎧 **Earphone/Headphone Recommendations:**\n\n🔇 **Best ANC**: Sony WH-1000XM5 (8M₫), Bose QC45 (7M₫)\n🎵 **True wireless**: AirPods Pro 2 (6M₫), Samsung Buds2 Pro (3.5M₫), Sony WF-1000XM5 (5.5M₫)\n💰 **Mid-range value**: Jabra Elite 4 (2M₫), Anker Soundcore (600k–1.5M₫)\n\nIn-ear or over-ear? Do you need noise cancellation? 🎶"],
+        ],
+        'keyboard' => [
+            'vi' => ["⌨️ **Tư vấn bàn phím:**\n\n🎮 **Gaming cơ học**: Logitech G Pro X (2.5M₫), Razer BlackWidow (2M₫)\n💼 **Văn phòng**: Logitech MX Keys (2M₫ — không dây, yên tĩnh)\n💰 **Giá tốt**: Keychron K2 (1.5M₫), Akko 3087 (700k)\n\nBạn cần dùng cho gaming hay văn phòng? Thích switch nhẹ hay nặng? ⌨️"],
+            'en' => ["⌨️ **Keyboard Recommendations:**\n\n🎮 **Gaming mechanical**: Logitech G Pro X (2.5M₫), Razer BlackWidow (2M₫)\n💼 **Office**: Logitech MX Keys (2M₫ — wireless, quiet)\n💰 **Budget picks**: Keychron K2 (1.5M₫), Akko 3087 (700k)\n\nGaming or office use? Light or heavy switch feel? ⌨️"],
+        ],
+        'monitor' => [
+            'vi' => ["🖥️ **Tư vấn màn hình:**\n\n🎮 **Gaming**: LG UltraGear 27\" 165Hz (7M₫), Samsung Odyssey G5 (8M₫)\n🎨 **Đồ họa / chỉnh màu**: LG 27\" 4K IPS (10M₫), Dell U2722D (12M₫)\n💼 **Văn phòng**: Dell 24\" FHD (4M₫), LG 27\" QHD (6M₫)\n\nBạn dùng để gaming, thiết kế hay văn phòng? Cần màn hình bao nhiêu inch? 🖥️"],
+            'en' => ["🖥️ **Monitor Recommendations:**\n\n🎮 **Gaming**: LG UltraGear 27\" 165Hz (7M₫), Samsung Odyssey G5 (8M₫)\n🎨 **Design/Color work**: LG 27\" 4K IPS (10M₫), Dell U2722D (12M₫)\n💼 **Office**: Dell 24\" FHD (4M₫), LG 27\" QHD (6M₫)\n\nGaming, design, or office? What screen size do you prefer? 🖥️"],
+        ],
+        'accessory' => [
+            'vi' => ["🔌 **Phụ kiện công nghệ:**\n\n- 🖱️ Chuột: Logitech MX Master 3 (2M₫), G304 (700k)\n- 📷 Webcam: Logitech C920 (1.5M₫)\n- 💾 SSD: Samsung 870 EVO, WD Blue (từ 500k)\n- 🔋 Sạc dự phòng: Anker, Xiaomi (300k–1M₫)\n- 🎒 Túi laptop: 200k–1M₫\n\nXem thêm tại [Phụ kiện](/products?category=accessories) 🛒"],
+            'en' => ["🔌 **Tech Accessories:**\n\n- 🖱️ Mouse: Logitech MX Master 3 (2M₫), G304 (700k)\n- 📷 Webcam: Logitech C920 (1.5M₫)\n- 💾 SSD: Samsung 870 EVO, WD Blue (from 500k)\n- 🔋 Power bank: Anker, Xiaomi (300k–1M₫)\n- 🎒 Laptop bags: 200k–1M₫\n\nSee more at [Accessories](/products?category=accessories) 🛒"],
+        ],
+        'compare' => [
+            'vi' => ["🔍 Để so sánh sản phẩm chính xác, bạn cho mình biết **tên cụ thể** của 2 sản phẩm muốn so sánh nhé!\n\nVí dụ: *\"So sánh MacBook Air M2 và Dell XPS 13\"* hoặc *\"iPhone 15 vs Samsung S24\"*\n\nMình sẽ phân tích điểm mạnh/yếu cho bạn ngay 📊"],
+            'en' => ["🔍 To compare products accurately, please tell me the **specific names** of the 2 products!\n\nExample: *\"Compare MacBook Air M2 vs Dell XPS 13\"* or *\"iPhone 15 vs Samsung S24\"*\n\nI'll analyze pros and cons for you right away 📊"],
+        ],
+        'recommend' => [
+            'vi' => ["💡 Mình rất vui được tư vấn! Để gợi ý đúng nhất, bạn cho mình biết:\n\n1️⃣ **Mục đích dùng** (gaming, học tập, văn phòng, đồ họa...)\n2️⃣ **Ngân sách** (khoảng bao nhiêu triệu₫?)\n3️⃣ **Sản phẩm nào** (laptop, điện thoại, tai nghe...?)\n\nTin tưởng mình, mình sẽ tìm ra lựa chọn tốt nhất cho bạn 🎯"],
+            'en' => ["💡 Happy to help you choose! To give the best recommendation, please tell me:\n\n1️⃣ **Use case** (gaming, studies, office, design...)\n2️⃣ **Budget** (approximately how many million₫?)\n3️⃣ **Product type** (laptop, phone, earphones...?)\n\nTrust me, I'll find the best option for you 🎯"],
+        ],
+        'contact' => [
+            'vi' => ["📞 **Liên hệ TechStore:**\n\n- ☎️ Hotline: **1800-xxxx** (8h–22h, Thứ 2–CN)\n- 📧 Email: **support@techstore.vn**\n- 💬 Chat: [Liên hệ trực tiếp](/lien-he)\n\nĐội ngũ hỗ trợ phản hồi trong **15 phút** trong giờ hành chính 🚀"],
+            'en' => ["📞 **Contact TechStore:**\n\n- ☎️ Hotline: **1800-xxxx** (8am–10pm, Mon–Sun)\n- 📧 Email: **support@techstore.vn**\n- 💬 Chat: [Contact Us](/lien-he)\n\nSupport team responds within **15 minutes** during business hours 🚀"],
+        ],
+        'security' => [
+            'vi' => ["🔐 **Bảo mật tài khoản TechStore:**\n\n- Hệ thống **xác thực 3 lớp (3FA)** bảo vệ tài khoản\n- AI tự động phát hiện đăng nhập bất thường\n- Nhận **cảnh báo email** khi có đăng nhập từ thiết bị lạ\n\n✅ Khuyến nghị: dùng mật khẩu mạnh + không chia sẻ OTP\nBị mất tài khoản? Gọi hotline **1800-xxxx** ngay!"],
+            'en' => ["🔐 **TechStore Account Security:**\n\n- **3-factor authentication (3FA)** protects your account\n- AI automatically detects abnormal login attempts\n- Receive **email alerts** for logins from unknown devices\n\n✅ Tips: use strong passwords + never share your OTP\nAccount compromised? Call hotline **1800-xxxx** immediately!"],
+        ],
+        'thanks' => [
+            'vi' => ["😊 Không có gì! Nếu cần thêm hỗ trợ cứ nhắn mình nhé. Chúc bạn mua sắm vui vẻ tại TechStore! 🛍️","🙌 Rất vui được giúp bạn! Có gì cần hỏi thêm không nào? TechBot luôn sẵn sàng 24/7 💪"],
+            'en' => ["😊 You're welcome! Feel free to ask if you need anything else. Happy shopping at TechStore! 🛍️","🙌 Glad I could help! Any other questions? TechBot is here 24/7 💪"],
+        ],
+        'buy_help' => [
+            'vi' => ["🛒 **Hướng dẫn mua hàng tại TechStore:**\n\n1️⃣ Vào [Cửa hàng](/products) → chọn sản phẩm → **Thêm vào giỏ**\n2️⃣ Vào [Giỏ hàng](/cart) → kiểm tra → nhấn **Đặt hàng**\n3️⃣ Nhập địa chỉ giao hàng → chọn phương thức thanh toán\n4️⃣ Xác nhận → nhận email xác nhận 📧\n5️⃣ Theo dõi đơn tại [Đơn hàng](/orders)\n\nCần tư vấn sản phẩm cụ thể không? 😊"],
+            'en' => ["🛒 **How to shop at TechStore:**\n\n1️⃣ Go to [Store](/products) → select product → **Add to Cart**\n2️⃣ Go to [Cart](/cart) → review → click **Place Order**\n3️⃣ Enter shipping address → select payment method\n4️⃣ Confirm → receive confirmation email 📧\n5️⃣ Track order at [My Orders](/orders)\n\nNeed advice on a specific product? 😊"],
+        ],
+        'fallback' => [
+            'vi' => ["🤔 Mình chưa hiểu rõ câu hỏi của bạn. Bạn có thể hỏi về:\n\n💻 **Sản phẩm** (laptop, điện thoại, tai nghe...)\n📦 **Đơn hàng** (trạng thái, hủy đơn)\n🚚 **Giao hàng & đổi trả**\n💳 **Thanh toán**\n🎉 **Khuyến mãi**\n\nHoặc gọi hotline **1800-xxxx** để được hỗ trợ trực tiếp!","🙋 Mình chưa rõ ý bạn muốn hỏi. Thử diễn đạt lại hoặc chọn chủ đề bên dưới nhé! Nếu cần gấp: hotline **1800-xxxx** (8h–22h) 📞"],
+            'en' => ["🤔 I'm not sure I understood your question. You can ask about:\n\n💻 **Products** (laptops, phones, earphones...)\n📦 **Orders** (status, cancellation)\n🚚 **Shipping & Returns**\n💳 **Payment**\n🎉 **Promotions**\n\nOr call hotline **1800-xxxx** for direct support!","🙋 I didn't quite get that. Try rephrasing or choose a topic below! For urgent help: hotline **1800-xxxx** (8am–10pm) 📞"],
+        ],
+    ];
+
+    private function detectLanguage(string $text): string
     {
-        try {
-            $validated = $request->validate([
-                'conversation_id' => 'required|exists:chatbot_conversations,id',
-                'message' => 'required|string|max:1000',
-            ]);
-
-            $conversation = ChatbotConversation::find($validated['conversation_id']);
-            if (! $conversation) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cuộc trò chuyện không tồn tại',
-                ], 404);
-            }
-
-            $userMessage = $validated['message'];
-
-            // Store user message
-            ChatbotMessage::create([
-                'conversation_id' => $conversation->id,
-                'sender' => 'user',
-                'message' => $userMessage,
-            ]);
-
-            // Process message and generate response
-            $botResponse = $this->processUserMessage($userMessage, $conversation);
-
-            if (! $botResponse) {
-                throw new \Exception('Bot response is null');
-            }
-
-            // Store bot response
-            ChatbotMessage::create([
-                'conversation_id' => $conversation->id,
-                'sender' => 'bot',
-                'message' => $botResponse['message'],
-                'suggested_products' => json_encode($botResponse['products'] ?? []),
-                'metadata' => json_encode($botResponse['metadata'] ?? []),
-            ]);
-
-            // Update conversation
-            $conversation->update([
-                'message_count' => $conversation->message_count + 2,
-                'last_message_at' => now(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'bot_message' => $botResponse['message'],
-                'suggested_products' => $botResponse['products'] ?? [],
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation error: '.implode(', ', $e->errors()['message'] ?? []),
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi server: '.$e->getMessage(),
-            ], 500);
+        // Vietnamese-specific characters
+        $viPattern = '/[àáâãèéêìíòóôõùúýăđơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]/iu';
+        if (preg_match($viPattern, $text)) {
+            return 'vi';
         }
+        // Vietnamese words without diacritics
+        $viWords = ['ban', 'toi', 'minh', 'hang', 'san pham', 'don hang', 'gui hang', 'thanh toan', 'ho tro'];
+        $lower = mb_strtolower($text);
+        foreach ($viWords as $w) {
+            if (str_contains($lower, $w)) return 'vi';
+        }
+        return 'en';
     }
 
-    /**
-     * Process user message and generate bot response
-     */
-    private function processUserMessage($message, $conversation)
+    private function detectIntent(string $text): string
     {
-        $message_lower = trim(strtolower($message));
-        $products = [];
-        $metadata = ['intent' => 'general'];
-        $response = '';
-
-        // Enhanced Vietnamese product keywords with aliases
-        $productKeywords = [
-            // Mice
-            'chuột' => ['mouse', 'chuột', 'chuột game', 'chuột gaming'],
-            'mouse' => ['mouse', 'chuột'],
-
-            // Keyboards
-            'bàn phím' => ['keyboard', 'bàn phím', 'keyboard cơ', 'bàn phím cơ'],
-            'keyboard' => ['keyboard', 'bàn phím'],
-
-            // Headsets
-            'headset' => ['headset', 'tai nghe', 'tai nghe chơi game'],
-            'tai nghe' => ['headset', 'tai nghe'],
-            'audio' => ['headset', 'speaker', 'tai nghe'],
-
-            // Monitors
-            'monitor' => ['monitor', 'màn hình'],
-            'màn hình' => ['monitor', 'màn hình'],
-            'display' => ['monitor', 'màn hình'],
-
-            // Laptops
-            'laptop' => ['laptop', 'máy tính xách tay', 'notebook'],
-            'máy tính' => ['laptop', 'máy tính', 'desktop'],
-
-            // Gaming gear
-            'gaming' => ['mouse', 'keyboard', 'headset', 'monitor', 'gaming chair'],
-
-            // PC & Components
-            'pc' => ['laptop', 'máy tính', 'pc'],
-            'cpu' => ['processor', 'cpu'],
-            'gpu' => ['graphics card', 'gpu', 'vga'],
-            'ram' => ['ram', 'memory'],
-            'ssd' => ['ssd', 'ổ cứng'],
-        ];
-
-        // 1. GREETING - Check first for friendly interaction
-        if (preg_match('/^(xin chào|hello|hi|chào|yêu|thank|cảm ơn)[^?]*$/', $message_lower)) {
-            $metadata['intent'] = 'greeting';
-            $response = "Xin chào! 👋 Rất vui được gặp bạn! Tôi là AI Assistant của TechStore.\n\n"
-                ."Tôi có thể giúp bạn:\n"
-                ."💻 **Tìm sản phẩm** - hỏi tôi về chuột, bàn phím, headset, monitor, laptop, v.v.\n"
-                ."💰 **Tìm theo giá** - ví dụ: 'Sản phẩm dưới 5 triệu' hay 'từ 3-10 triệu'\n"
-                ."⚡ **So sánh** - ví dụ: 'So sánh chuột A và B'\n"
-                ."� **Kiểm tra đơn hàng** - hỏi 'Đơn hàng của tôi ở đâu?'\n"
-                ."🎁 **Mã giảm giá** - hỏi về khuyến mãi có sẵn\n"
-                ."❓ **Hỏi FAQ** - hỏi về chính sách, thanh toán, giao hàng\n"
-                ."📞 **Nhận hỗ trợ** - hỏi về vấn đề\n\n"
-                .'Bạn muốn tìm gì hôm nay?';
-
-            return [
-                'message' => $response,
-                'products' => [],
-                'metadata' => $metadata,
-            ];
-        }
-
-        // 1.5 ORDER TRACKING - Check for order-related keywords
-        if (preg_match('/đơn hàng|order|kiểm tra|check|track|giao|vị trí|ở đâu|status/', $message_lower)) {
-            // This will be handled by API endpoint
-            $metadata['intent'] = 'check-order';
-            $response = '📦 Vui lòng chờ, tôi đang kiểm tra đơn hàng của bạn...';
-
-            $this->trackMetric('intent', 'check-order', $conversation->id);
-
-            return [
-                'message' => $response,
-                'products' => [],
-                'metadata' => $metadata,
-            ];
-        }
-
-        // 1.7 COMPARISON - Detect comparison requests
-        if (preg_match('/so sánh|nên mua|cái nào|khác gì|tốt hơn|vs|versus/', $message_lower)) {
-            $metadata['intent'] = 'comparison';
-
-            // Try to extract product names from conversation history
-            $lastMessages = ChatbotMessage::where('conversation_id', $conversation->id)
-                ->orderBy('created_at', 'desc')
-                ->limit(3)
-                ->pluck('message')
-                ->toArray();
-
-            $response = "📊 **So Sánh Sản Phẩm**\n\n"
-                ."Tôi có thể giúp bạn so sánh giữa các sản phẩm khác nhau!\n\n"
-                ."Hãy nói tên 2-3 sản phẩm bạn muốn so sánh, ví dụ:\n"
-                ."• 'So sánh chuột Logitech và Razer'\n"
-                ."• 'Monitor 144Hz nào tốt nhất?'\n"
-                ."• 'Nên mua keyboard cơ hay keyboard màn hình?'\n\n"
-                .'Tôi sẽ giúp bạn so sánh giá, ưu điểm và nhược điểm! 💪';
-
-            $this->trackMetric('intent', 'comparison', $conversation->id);
-
-            return [
-                'message' => $response,
-                'products' => [],
-                'metadata' => $metadata,
-            ];
-        }
-
-        // 2. PRICE RANGE SEARCH - Handle "từ X đến Y", "dưới X", "trên X"
-        if (preg_match('/từ\s*(\d+)\s*đến\s*(\d+)\s*(triệu|k)?/i', $message_lower, $matches) ||
-            preg_match('/từ\s*(\d+)\s*-\s*(\d+)\s*(triệu|k)?/i', $message_lower, $matches)) {
-
-            $minPrice = (int) $matches[1];
-            $maxPrice = (int) $matches[2];
-            $unit = $matches[3] ?? 'triệu';
-
-            $minPriceVND = ($unit === 'k' ? $minPrice * 1000 : $minPrice * 1000000);
-            $maxPriceVND = ($unit === 'k' ? $maxPrice * 1000 : $maxPrice * 1000000);
-
-            $metadata['intent'] = 'price-range-search';
-            $metadata['price_range'] = ['min' => $minPrice, 'max' => $maxPrice, 'unit' => $unit];
-
-            $products = Product::whereBetween('price', [$minPriceVND, $maxPriceVND])
-                ->orderBy('price', 'asc')
-                ->limit(6)
-                ->get()
-                ->toArray();
-
-            $minFormatted = number_format($minPriceVND, 0, '.', ',');
-            $maxFormatted = number_format($maxPriceVND, 0, '.', ',');
-
-            if (empty($products)) {
-                $response = "Xin lỗi, chúng tôi không có sản phẩm nào trong khoảng {$minFormatted}đ - {$maxFormatted}đ. "
-                    ."Dưới đây là các sản phẩm gần với giá bạn tìm:\n\n";
-                $products = Product::whereBetween('price', [$minPriceVND * 0.8, $maxPriceVND * 1.2])
-                    ->orderBy('price', 'asc')
-                    ->limit(5)
-                    ->get()
-                    ->toArray();
-            } else {
-                $response = '✅ Tôi tìm thấy '.count($products)." sản phẩm trong khoảng {$minFormatted}đ - {$maxFormatted}đ:\n\n";
-            }
-
-            return $this->generateSmartProductResponse($response, $products, $metadata);
-        }
-
-        // 3. SIMPLE PRICE SEARCH - "dưới 5 triệu", "trên 10 triệu"
-        if (preg_match('/(dưới|under|below)\s*(\d+)\s*(triệu|k)?/i', $message_lower, $matches)) {
-            $maxPrice = (int) $matches[2];
-            $unit = $matches[3] ?? 'triệu';
-            $maxPriceVND = ($unit === 'k' ? $maxPrice * 1000 : $maxPrice * 1000000);
-
-            $metadata['intent'] = 'price-search-below';
-            $metadata['max_price'] = $maxPrice;
-
-            $products = Product::where('price', '<=', $maxPriceVND)
-                ->orderBy('price', 'asc')
-                ->limit(6)
-                ->get()
-                ->toArray();
-
-            if (empty($products)) {
-                $response = 'Xin lỗi, chúng tôi không có sản phẩm nào dưới '.number_format($maxPriceVND, 0, '.', ',').'đ. '
-                    ."Dưới đây là các sản phẩm giá rẻ nhất của chúng tôi:\n\n";
-                $products = Product::orderBy('price', 'asc')->limit(5)->get()->toArray();
-            } else {
-                $response = '💰 Tôi tìm thấy '.count($products).' sản phẩm dưới '.number_format($maxPriceVND, 0, '.', ',')."đ:\n\n";
-            }
-
-            return $this->generateSmartProductResponse($response, $products, $metadata);
-        }
-
-        if (preg_match('/(trên|above|over)\s*(\d+)\s*(triệu|k)?/i', $message_lower, $matches)) {
-            $minPrice = (int) $matches[2];
-            $unit = $matches[3] ?? 'triệu';
-            $minPriceVND = ($unit === 'k' ? $minPrice * 1000 : $minPrice * 1000000);
-
-            $metadata['intent'] = 'price-search-above';
-            $metadata['min_price'] = $minPrice;
-
-            $products = Product::where('price', '>=', $minPriceVND)
-                ->orderBy('price', 'desc')
-                ->limit(6)
-                ->get()
-                ->toArray();
-
-            if (empty($products)) {
-                $response = 'Hiện tại chúng tôi không có sản phẩm nào trên '.number_format($minPriceVND, 0, '.', ',')."đ.\n\n";
-            } else {
-                $response = '⭐ Tôi tìm thấy '.count($products).' sản phẩm cao cấp trên '.number_format($minPriceVND, 0, '.', ',')."đ:\n\n";
-            }
-
-            return $this->generateSmartProductResponse($response, $products, $metadata);
-        }
-
-        // 4. PRODUCT SEARCH BY KEYWORD/CATEGORY
-        foreach ($productKeywords as $keyword => $searchTerms) {
-            if (strpos($message_lower, $keyword) !== false) {
-                $metadata['intent'] = 'product-search';
-                $metadata['product_type'] = $keyword;
-
-                // Build smart search query
-                $query = Product::query();
-                foreach ($searchTerms as $term) {
-                    $query->orWhere('name', 'like', '%'.$term.'%')
-                        ->orWhere('description', 'like', '%'.$term.'%');
-                }
-
-                $products = $query->limit(6)->get()->toArray();
-
-                if (empty($products)) {
-                    $products = Product::inRandomOrder()->limit(4)->get()->toArray();
-                    $response = "Hmmm, chúng tôi hiện tại không có $keyword nào. "
-                        ."Nhưng đây là một số sản phẩm khác mà bạn có thể thích:\n\n";
-                } else {
-                    $response = '✨ Tôi tìm thấy '.count($products)." sản phẩm $keyword cho bạn "
-                        ."(được xếp theo độ liên quan):\n\n";
-                }
-
-                return $this->generateSmartProductResponse($response, $products, $metadata);
-            }
-        }
-
-        // 5. COMPARISON REQUEST - "so sánh", "cái nào tốt hơn"
-        if (preg_match('/so sánh|cái nào|khác gì|tốt hơn|difference|vs/', $message_lower)) {
-            $metadata['intent'] = 'comparison';
-
-            $response = "📊 **So Sánh Sản Phẩm**\n\n"
-                ."Bạn có thể hỏi tôi về:\n"
-                ."• 'So sánh chuột A và chuột B'\n"
-                ."• 'Chuột gaming nào tốt nhất?'\n"
-                ."• 'Bàn phím cơ hay bàn phím màn hình?'\n\n"
-                .'Hãy nói cụ thể 2 sản phẩm bạn muốn so sánh nhé! 😊';
-
-            return [
-                'message' => $response,
-                'products' => [],
-                'metadata' => $metadata,
-            ];
-        }
-
-        // 6. RECOMMENDATION REQUEST
-        if (preg_match('/gợi ý|recommend|nên|tốt nhất|best|hay nhất/', $message_lower)) {
-            $metadata['intent'] = 'recommendation';
-
-            $response = "🏆 **Sản Phẩm Được Khuyến Nghị**\n\n"
-                ."Dựa trên tìm kiếm phổ biến, dưới đây là các sản phẩm bán chạy nhất:\n\n";
-
-            $products = Product::orderBy('id', 'desc')->limit(6)->get()->toArray();
-
-            return $this->generateSmartProductResponse($response, $products, $metadata);
-        }
-
-        // 6.5 DISCOUNT / COUPON REQUEST
-        if (preg_match('/mã|giảm|discount|coupon|khuyến|promo|sale/', $message_lower)) {
-            $metadata['intent'] = 'discount-request';
-            $response = "🎁 **MÃ GIẢM GIÁ**\n\n"
-                ."Tôi đang tìm các mã giảm giá có sẵn cho bạn...\n"
-                .'Vui lòng chờ! ⏳';
-
-            $this->trackMetric('intent', 'discount-request', $conversation->id);
-
-            return [
-                'message' => $response,
-                'products' => [],
-                'metadata' => $metadata,
-            ];
-        }
-
-        // 6.7 FAQ/KNOWLEDGE BASE
-        if (preg_match('/hỏi|câu hỏi|faq|thường gặp|cách|hướng dẫn|làm sao|như thế nào/', $message_lower)) {
-            $metadata['intent'] = 'faq-search';
-            $response = "❓ **TRÍCH CẦU HỎI THƯỜNG GẶP**\n\n"
-                ."Hãy cụ thể hơn về câu hỏi của bạn:\n"
-                ."• Thanh toán như thế nào?\n"
-                ."• Chính sách đổi trả là gì?\n"
-                ."• Bao lâu mới giao hàng?\n"
-                ."• Bảo hành sản phẩm?\n\n"
-                .'Hoặc mô tả vấn đề cụ thể của bạn!';
-
-            $this->trackMetric('intent', 'faq-request', $conversation->id);
-
-            return [
-                'message' => $response,
-                'products' => [],
-                'metadata' => $metadata,
-            ];
-        }
-
-        // 7. SUPPORT REQUEST
-        if (preg_match('/hỗ trợ|support|giúp|vấn đề|lỗi|không hoạt động|đơn hàng|thanh toán|trả hàng|refund/', $message_lower)) {
-            $metadata['intent'] = 'support';
-            $response = "📞 **Trung tâm Hỗ trợ TechStore**\n\n"
-                ."Tôi có thể giúp bạn về:\n\n"
-                ."📦 **Đơn hàng & Vận chuyển**\n"
-                ."   - Kiểm tra trạng thái đơn hàng\n"
-                ."   - Vấn đề giao hàng\n\n"
-                ."💳 **Thanh Toán**\n"
-                ."   - Hỗ trợ thanh toán\n"
-                ."   - Các phương thức thanh toán có sẵn\n\n"
-                ."🔄 **Đổi & Trả Hàng**\n"
-                ."   - Chính sách đổi trả\n"
-                ."   - Yêu cầu hoàn tiền\n\n"
-                ."❓ **Câu Hỏi Chung**\n"
-                ."   - Bảo hành sản phẩm\n"
-                ."   - Thông tin sản phẩm\n\n"
-                ."📧 **Liên hệ trực tiếp**: support@techstore.com\n"
-                .'📱 **Hotline**: 1900-XXXX-XXXX';
-
-            return [
-                'message' => $response,
-                'products' => [],
-                'metadata' => $metadata,
-            ];
-        }
-
-        // 8. GET USER PREFERENCES - Remember past searches
-        if (preg_match('/lịch sử|đã tìm|tìm gần đây|danh sách|yêu thích/', $message_lower)) {
-            $metadata['intent'] = 'history';
-
-            $userMessages = ChatbotMessage::where('conversation_id', $conversation->id)
-                ->where('sender', 'user')
-                ->orderBy('created_at', 'desc')
-                ->limit(5)
-                ->pluck('message')
-                ->toArray();
-
-            if (empty($userMessages)) {
-                $response = 'Bạn chưa tìm kiếm sản phẩm nào trong cuộc trò chuyện này. '
-                    .'Hãy hỏi tôi về sản phẩm nào bạn quan tâm! 😊';
-            } else {
-                $response = "📋 **Các Tìm Kiếm Gần Đây Của Bạn**\n\n";
-                foreach ($userMessages as $index => $msg) {
-                    $response .= ($index + 1).'. '.substr($msg, 0, 50)."...\n";
+        $text = mb_strtolower($text);
+        $best = 'fallback';
+        $bestScore = 0;
+        foreach ($this->intents as $intent => $keywords) {
+            $score = 0;
+            foreach ($keywords as $kw) {
+                if (str_contains($text, $kw)) {
+                    $score += mb_strlen($kw);
                 }
             }
-
-            return [
-                'message' => $response,
-                'products' => [],
-                'metadata' => $metadata,
-            ];
-        }
-
-        // 9. DEFAULT - Smart fallback with products + helpful tips
-        $response = "🤔 Tôi chưa hiểu rõ lắm... nhưng đây là một số sản phẩm nổi bật cho bạn:\n\n";
-        $products = Product::inRandomOrder()->limit(6)->get()->toArray();
-
-        $response .= "**💡 Mẹo:** Bạn có thể nói:\n"
-            ."• 'Chuột gaming' hoặc 'bàn phím cơ'\n"
-            ."• 'Sản phẩm dưới 5 triệu' hoặc 'từ 3-10 triệu'\n"
-            ."• 'So sánh [sản phẩm A] và [sản phẩm B]'\n"
-            ."• 'Hỗ trợ' để liên hệ với chúng tôi\n\n";
-
-        return $this->generateSmartProductResponse($response, $products, $metadata);
-    }
-
-    /**
-     * Generate smart product response with rich formatting
-     */
-    private function generateSmartProductResponse($headerMessage, $products, $metadata)
-    {
-        $response = $headerMessage;
-
-        if (! empty($products)) {
-            foreach (array_slice($products, 0, 6) as $index => $product) {
-                $productName = $product['name'] ?? 'Sản phẩm';
-                $productPrice = number_format($product['price'] ?? 0, 0, '.', ',');
-                $productId = $product['id'] ?? '';
-
-                // Add emoji based on product type
-                $emoji = $this->getProductEmoji($product['name'] ?? '');
-
-                $response .= ($index + 1).". {$emoji} **".$productName."**\n";
-                $response .= '   💰 Giá: **'.$productPrice."đ**\n";
-
-                if (isset($product['description']) && ! empty($product['description'])) {
-                    $description = substr(strip_tags($product['description']), 0, 80);
-                    $response .= '   📝 '.$description."...\n";
-                }
-
-                $response .= "\n";
-            }
-        } else {
-            $response .= 'Hiện tại chúng tôi không có sản phẩm phù hợp. Vui lòng liên hệ hỗ trợ!';
-        }
-
-        return [
-            'message' => $response,
-            'products' => $products,
-            'metadata' => $metadata,
-        ];
-    }
-
-    /**
-     * Generate product response (legacy method - kept for compatibility)
-     */
-    private function generateProductResponse($headerMessage, $products, $metadata)
-    {
-        return $this->generateSmartProductResponse($headerMessage, $products, $metadata);
-    }
-
-    /**
-     * Get emoji for product type
-     */
-    private function getProductEmoji($productName)
-    {
-        $name_lower = strtolower($productName);
-
-        if (strpos($name_lower, 'chuột') !== false || strpos($name_lower, 'mouse') !== false) {
-            return '🖱️';
-        } elseif (strpos($name_lower, 'bàn phím') !== false || strpos($name_lower, 'keyboard') !== false) {
-            return '⌨️';
-        } elseif (strpos($name_lower, 'headset') !== false || strpos($name_lower, 'tai nghe') !== false) {
-            return '🎧';
-        } elseif (strpos($name_lower, 'monitor') !== false || strpos($name_lower, 'màn hình') !== false) {
-            return '🖥️';
-        } elseif (strpos($name_lower, 'laptop') !== false || strpos($name_lower, 'máy tính') !== false) {
-            return '💻';
-        } else {
-            return '⚙️';
-        }
-    }
-
-    /**
-     * Get conversation history
-     */
-    public function getHistory(Request $request)
-    {
-        $validated = $request->validate([
-            'conversation_id' => 'required|exists:chatbot_conversations,id',
-        ]);
-
-        $messages = ChatbotMessage::where('conversation_id', $validated['conversation_id'])
-            ->orderBy('created_at', 'asc')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'messages' => $messages,
-        ]);
-    }
-
-    /**
-     * Detect suspicious login
-     */
-    public function checkSuspiciousLogin(Request $request)
-    {
-        $user = Auth::user();
-        if (! $user) {
-            return response()->json(['success' => false], 401);
-        }
-
-        $ipAddress = $request->ip();
-        $isSuspicious = false;
-
-        // Check if IP is new
-        $hasSameIp = $user->loginLogs()->where('ip_address', $ipAddress)->exists();
-        if (! $hasSameIp) {
-            $isSuspicious = true;
-            SuspiciousLogin::create([
-                'user_id' => $user->id,
-                'ip_address' => $ipAddress,
-                'risk_level' => 'medium',
-                'reason' => 'Đăng nhập từ IP mới',
-            ]);
-        }
-
-        return response()->json([
-            'success' => true,
-            'is_suspicious' => $isSuspicious,
-        ]);
-    }
-
-    /**
-     * Get personalized recommendations based on conversation history
-     */
-    public function getRecommendations(Request $request)
-    {
-        $user = Auth::user();
-        $validated = $request->validate([
-            'conversation_id' => 'required|exists:chatbot_conversations,id',
-        ]);
-
-        $conversation = ChatbotConversation::find($validated['conversation_id']);
-
-        // Get user preferences if authenticated
-        if ($user) {
-            $userPref = UserPreference::where('user_id', $user->id)->first();
-
-            // If user has favorite categories, recommend from those
-            if ($userPref && ! empty($userPref['favorite_categories'])) {
-                $recommendations = Product::whereIn('category', $userPref['favorite_categories'])
-                    ->orderByRaw('RAND()')
-                    ->limit(5)
-                    ->get();
-            } else {
-                // Default: highest rated / best sellers
-                $recommendations = Product::orderByRaw('RAND()')
-                    ->limit(5)
-                    ->get();
-            }
-        } else {
-            // Guest user: show popular products
-            $recommendations = Product::inRandomOrder()->limit(5)->get();
-        }
-
-        return response()->json([
-            'success' => true,
-            'recommendations' => $recommendations,
-        ]);
-    }
-
-    /**
-     * Compare multiple products with detailed specs
-     */
-    public function compareProducts(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'product_ids' => 'required|array|min:2|max:5',
-                'product_ids.*' => 'exists:products,id',
-            ]);
-
-            $products = Product::whereIn('id', $validated['product_ids'])
-                ->get(['id', 'name', 'price', 'description', 'stock'])
-                ->toArray();
-
-            if (count($products) < 2) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cần ít nhất 2 sản phẩm để so sánh',
-                ], 400);
-            }
-
-            $comparison = $this->generateComparison($products);
-
-            return response()->json([
-                'success' => true,
-                'comparison' => $comparison,
-                'message' => $comparison['message'],
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi so sánh: '.$e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Generate detailed product comparison
-     */
-    private function generateComparison($products)
-    {
-        $response = "📊 **SO SÁNH CHI TIẾT SẢN PHẨM**\n\n";
-
-        // Build comparison table
-        $response .= '| Tiêu Chí | ';
-        foreach ($products as $p) {
-            $response .= $p['name'].' | ';
-        }
-        $response .= "\n";
-        $response .= '|---|';
-        foreach ($products as $p) {
-            $response .= '---|';
-        }
-        $response .= "\n";
-
-        // Price comparison
-        $response .= '| **Giá** | ';
-        foreach ($products as $p) {
-            $response .= number_format($p['price'], 0, '.', ',').'đ | ';
-        }
-        $response .= "\n";
-
-        // Stock
-        $response .= '| **Kho** | ';
-        foreach ($products as $p) {
-            $response .= ($p['stock'] > 0 ? '✅ '.$p['stock'].' sản phẩm' : '❌ Hết hàng').' | ';
-        }
-        $response .= "\n";
-
-        // Price advantage
-        $minPrice = min(array_column($products, 'price'));
-        $response .= "\n💰 **PHÂN TÍCH GIÁ:**\n";
-        foreach ($products as $p) {
-            $diff = $p['price'] - $minPrice;
-            if ($diff == 0) {
-                $response .= '• **'.$p['name']."**: GIÁ RẺ NHẤT ⭐\n";
-            } else {
-                $percentage = round(($diff / $minPrice) * 100, 1);
-                $response .= '• **'.$p['name'].'**: +$'.number_format($diff, 0, '.', ',')."đ (+{$percentage}%)\n";
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $best = $intent;
             }
         }
-
-        // Recommendation
-        $response .= "\n✅ **KHUYẾN NGHỊ:**\n";
-        if (count($products) == 2) {
-            $response .= "Nếu bạn coi trọng **giá rẻ** → Chọn sản phẩm có giá tốt nhất\n";
-            $response .= "Nếu bạn coi trọng **chất lượng** → Hỏi tôi thêm chi tiết specs\n";
-        }
-
-        return [
-            'message' => $response,
-            'products' => $products,
-        ];
+        return $best;
     }
 
-    /**
-     * Check order status
-     */
-    public function checkOrderStatus(Request $request)
+    private function ruleBasedReply(string $userMsg): string
     {
-        try {
-            $validated = $request->validate([
-                'conversation_id' => 'required|exists:chatbot_conversations,id',
-                'order_id' => 'nullable|integer',
-            ]);
+        $intent = $this->detectIntent($userMsg);
+        $lang   = $this->detectLanguage($userMsg);
+        $pool   = $this->responses[$intent][$lang]
+               ?? $this->responses[$intent]['en']
+               ?? $this->responses['fallback'][$lang]
+               ?? $this->responses['fallback']['en'];
+        return $pool[array_rand($pool)];
+    }
 
-            $user = Auth::user();
-            $conversation = ChatbotConversation::find($validated['conversation_id']);
+    // ── POST /chatbot/reply ───────────────────────────────────────────
+    public function reply(Request $request)
+    {
+        $request->validate([
+            'message' => 'required|string|max:500',
+        ]);
 
-            // Get orders
-            $query = Order::query();
-            if ($validated['order_id'] ?? null) {
-                $query->where('id', $validated['order_id']);
-            } elseif ($user) {
-                $query->where('user_id', $user->id);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vui lòng đăng nhập để kiểm tra đơn hàng',
-                ], 401);
-            }
+        $userMsg = trim($request->input('message'));
 
-            $orders = $query->orderBy('created_at', 'desc')->limit(3)->get();
+        // Detect language and inject hint so AI always replies in correct language
+        $lang         = $this->detectLanguage($userMsg);
+        $langHint     = $lang === 'vi'
+            ? '[SYSTEM: Reply in Vietnamese ONLY]'
+            : '[SYSTEM: Reply in English ONLY]';
+        $userMsgForAI = "{$langHint}\n{$userMsg}";
 
-            if ($orders->isEmpty()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => '📦 Bạn chưa có đơn hàng nào',
-                    'orders' => [],
+        // Build conversation history from session (last 6 turns)
+        $history  = session('chatbot_history', []);
+        $messages = [['role' => 'system', 'content' => $this->systemPrompt]];
+        foreach (array_slice($history, -10) as $turn) {
+            // Normalize legacy 'bot' role → 'assistant'
+            $role = $turn['role'] === 'bot' ? 'assistant' : $turn['role'];
+            if (!in_array($role, ['user', 'assistant'])) continue;
+            $messages[] = ['role' => $role, 'content' => $turn['msg']];
+        }
+        $messages[] = ['role' => 'user', 'content' => $userMsgForAI];
+
+        $reply = null;
+
+        // 1. Try Gemini native REST API
+        $geminiKey = config('services.gemini.key');
+        if (!empty($geminiKey) && $reply === null) {
+            $reply = $this->callGemini($geminiKey, $messages);
+        }
+
+        // 2. Fallback Groq if Gemini errors
+        $groqKey = config('services.groq.key');
+        if (!empty($groqKey) && $reply === null) {
+            try {
+                $client   = OpenAI::factory()
+                    ->withApiKey($groqKey)
+                    ->withBaseUri('api.groq.com/openai/v1')
+                    ->make();
+                $response = $client->chat()->create([
+                    'model'       => config('services.groq.model', 'llama-3.3-70b-versatile'),
+                    'messages'    => $messages,
+                    'max_tokens'  => 600,
+                    'temperature' => 0.65,
                 ]);
+                $reply = trim($response->choices[0]->message->content ?? '');
+            } catch (\Throwable $e) {
+                \Log::warning('ChatbotController Groq error: ' . $e->getMessage());
             }
+        }
 
-            $message = "📦 **TRẠNG THÁI ĐƠN HÀNG**\n\n";
-            foreach ($orders as $order) {
-                $statusEmoji = $this->getStatusEmoji($order->status);
-                $message .= $statusEmoji.' **Đơn #'.$order->id.'** ('.number_format($order->total_amount, 0, '.', ',')."đ)\n";
-                $message .= '   📅 Đặt: '.$order->created_at->format('d/m/Y H:i')."\n";
-                $message .= '   📍 Trạng thái: '.$this->getStatusVietnamese($order->status)."\n";
-                if ($order->status == 'shipped') {
-                    $message .= "   🚚 Dự kiến: 24h nữa\n";
-                } elseif ($order->status == 'delivered') {
-                    $message .= "   ✅ Đã giao\n";
+        // 3. Fallback rule-based
+        if (empty($reply)) {
+            $reply = $this->ruleBasedReply($userMsg);
+        }
+
+        // Save to session history
+        $history[] = ['role' => 'user',      'msg' => mb_substr($userMsg, 0, 500)];
+        $history[] = ['role' => 'assistant',  'msg' => mb_substr($reply,   0, 500)];
+        session(['chatbot_history' => array_slice($history, -20)]);
+
+        return response()->json(['reply' => $reply]);
+    }
+
+    private function callGemini(string $apiKey, array $messages): ?string
+    {
+        try {
+            // Convert messages: extract system prompt, convert to Gemini format
+            $systemText = '';
+            $contents   = [];
+            foreach ($messages as $msg) {
+                if ($msg['role'] === 'system') {
+                    $systemText = $msg['content'];
+                    continue;
                 }
-                $message .= "\n";
+                $role = $msg['role'] === 'assistant' ? 'model' : 'user';
+                $contents[] = ['role' => $role, 'parts' => [['text' => $msg['content']]]];
             }
 
-            $message .= "💡 **Cần hỗ trợ?** Hãy nói 'thanh toán', 'trả hàng', hoặc 'vấn đề' để được giúp đỡ!";
-
-            // Track metric
-            $this->trackMetric('order_checked', 'check-order', $conversation->id);
-
-            return response()->json([
-                'success' => true,
-                'message' => $message,
-                'orders' => $orders->toArray(),
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi: '.$e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Get discount codes and suggestions
-     */
-    public function getSuggestedDiscounts(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'conversation_id' => 'required|exists:chatbot_conversations,id',
-                'total_amount' => 'nullable|numeric|min:0',
-            ]);
-
-            $totalAmount = $validated['total_amount'] ?? 0;
-            $conversation = ChatbotConversation::find($validated['conversation_id']);
-            $user = Auth::user();
-
-            // Get active coupons
-            $coupons = Coupon::where('is_active', true)
-                ->where('expiry_date', '>', now())
-                ->get();
-
-            $applicableCoupons = $coupons->filter(function ($coupon) use ($totalAmount) {
-                return $totalAmount >= $coupon->min_order_amount;
-            });
-
-            $message = "🎁 **MÃ GIẢM GIÁ CÓ SẴN**\n\n";
-
-            if ($applicableCoupons->isEmpty()) {
-                $message .= "Hiện tại không có mã giảm giá phù hợp🙁\n\n";
-                $message .= '💡 Hãy theo dõi để nhận thông báo mã mới!';
-
-                return response()->json([
-                    'success' => true,
-                    'message' => $message,
-                    'coupons' => [],
-                ]);
-            }
-
-            foreach ($applicableCoupons as $coupon) {
-                $discount = $coupon->discount_type == 'percentage'
-                    ? $coupon->discount_value.'%'
-                    : number_format($coupon->discount_value, 0, '.', ',').'đ';
-
-                $message .= '✨ **'.$coupon->code."**\n";
-                $message .= '   Giảm: '.$discount."\n";
-                $message .= '   Điều kiện: Từ '.number_format($coupon->min_order_amount, 0, '.', ',')."đ\n";
-                $message .= '   Hết hạn: '.$coupon->expiry_date->format('d/m/Y')."\n";
-                $message .= '   → Nhập mã: `'.$coupon->code."`\n\n";
-            }
-
-            // Track metric
-            $this->trackMetric('discount_suggested', 'get-discount', $conversation->id);
-
-            return response()->json([
-                'success' => true,
-                'message' => $message,
-                'coupons' => $applicableCoupons->toArray(),
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi: '.$e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Get FAQ with search
-     */
-    public function searchFAQ(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'conversation_id' => 'required|exists:chatbot_conversations,id',
-                'query' => 'required|string|max:200',
-            ]);
-
-            $queryStr = strtolower($validated['query']);
-            $conversation = ChatbotConversation::find($validated['conversation_id']);
-
-            // Simple keyword mapping instead of complex query
-            $faqMapping = [
-                'thanh toán' => 1, 'payment' => 1, 'tiền' => 1,
-                'giao hàng' => 2, 'shipping' => 2, 'delivery' => 2,
-                'đổi trả' => 5, 'return' => 5, 'exchange' => 5,
-                'bảo hành' => 7, 'warranty' => 7, 'guarantee' => 7,
+            $body = [
+                'system_instruction' => ['parts' => [['text' => $systemText]]],
+                'contents'           => $contents,
+                'generationConfig'   => ['maxOutputTokens' => 600, 'temperature' => 0.65],
             ];
 
-            $faqId = null;
-            foreach ($faqMapping as $keyword => $id) {
-                if (strpos($queryStr, $keyword) !== false) {
-                    $faqId = $id;
-                    break;
-                }
-            }
+            $model = config('services.gemini.model', 'gemini-2.0-flash');
+            $url   = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
 
-            if ($faqId) {
-                $faqRecord = FAQ::find($faqId);
-                if ($faqRecord) {
-                    $message = "❓ **CÂU HỎI THƯỜNG GẶP**\n\n"
-                        .'**Q: '.$faqRecord->question."**\n\n"
-                        ."**Trả lời:**\n"
-                        .$faqRecord->answer."\n\n"
-                        ."👍 Câu trả lời có hữu ích không?\n";
-
-                    // Track metric
-                    $this->trackMetric('faq_viewed', $faqRecord->category ?? 'general', $conversation->id);
-
-                    return response()->json([
-                        'success' => true,
-                        'message' => $message,
-                    ]);
-                }
-            }
-
-            // Default: Suggest FAQ categories
-            $message = "❓ **TRÍCH CẦU HỎI THƯỜNG GẶP**\n\n"
-                ."Tôi có sẵn các câu trả lời về:\n"
-                ."📦 **Giao hàng & Vận chuyển** - Hỏi 'giao hàng bao lâu?'\n"
-                ."💳 **Thanh toán** - Hỏi 'thanh toán như thế nào?'\n"
-                ."🔄 **Đổi & Trả** - Hỏi 'đổi trả thế nào?'\n"
-                ."🔧 **Bảo hành** - Hỏi 'bảo hành bao lâu?'\n\n"
-                .'Hoặc hãy liên hệ: **support@techstore.com**';
-
-            return response()->json([
-                'success' => true,
-                'message' => $message,
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST           => true,
+                CURLOPT_POSTFIELDS     => json_encode($body),
+                CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+                CURLOPT_TIMEOUT        => 15,
             ]);
+            $raw  = curl_exec($ch);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi: '.$e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Get admin analytics dashboard data
-     */
-    public function getAdminAnalytics(Request $request)
-    {
-        $user = Auth::user();
-
-        // Verify admin access
-        if (! $user || $user->role != 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Bạn không có quyền truy cập',
-            ], 403);
-        }
-
-        try {
-            $today = now()->startOfDay();
-            $thisWeek = now()->startOfWeek();
-            $thisMonth = now()->startOfMonth();
-
-            // Top questions
-            $topQuestions = ChatbotAnalytic::where('metric_type', 'intent')
-                ->where('date', '>=', $thisMonth)
-                ->groupBy('metric_name')
-                ->selectRaw('metric_name, COUNT(*) as total')
-                ->orderByDesc('total')
-                ->limit(10)
-                ->get();
-
-            // Top products viewed via chat
-            $topProducts = ChatbotAnalytic::where('metric_type', 'product_viewed')
-                ->where('date', '>=', $thisMonth)
-                ->groupBy('metric_name')
-                ->selectRaw('metric_name, COUNT(*) as views')
-                ->orderByDesc('views')
-                ->limit(10)
-                ->get();
-
-            // Conversation count
-            $todayConversations = ChatbotConversation::where('created_at', '>=', $today)->count();
-            $weekConversations = ChatbotConversation::where('created_at', '>=', $thisWeek)->count();
-            $monthConversations = ChatbotConversation::where('created_at', '>=', $thisMonth)->count();
-
-            // Most common intents
-            $topIntents = ChatbotAnalytic::where('metric_type', 'intent')
-                ->where('date', '>=', $today)
-                ->groupBy('metric_name')
-                ->selectRaw('metric_name, COUNT(*) as count')
-                ->orderByDesc('count')
-                ->limit(5)
-                ->get();
-
-            // Messages per conversation
-            $avgMessages = ChatbotMessage::whereHas('conversation', function ($q) {
-                $q->where('created_at', '>=', now()->startOfMonth());
-            })->count();
-            $avgPerConversation = $monthConversations > 0 ? round($avgMessages / $monthConversations, 2) : 0;
-
-            $message = "📊 **ANALYTICS CHO ADMIN**\n\n"
-                ."**📈 CHỈ SỐ HÔM NAY:**\n"
-                .'• Cuộc trò chuyện: '.$todayConversations."\n"
-                .'• Tuần này: '.$weekConversations."\n"
-                .'• Tháng này: '.$monthConversations."\n\n"
-                ."**🏆 TOP NHƯ CẦU HÔMS:**\n";
-
-            foreach ($topIntents as $intent) {
-                $message .= '• '.ucfirst($intent->metric_name).': '.$intent->count." lần\n";
+            if ($code !== 200) {
+                \Log::warning("ChatbotController Gemini HTTP {$code}: " . $raw);
+                return null;
             }
 
-            $message .= "\n**📦 TOP SẢN PHẨM:**\n";
-
-            foreach ($topProducts->take(5) as $product) {
-                $message .= '• '.$product->metric_name.': '.$product->views." lượt xem\n";
-            }
-
-            $message .= "\n**💬 BỤC HỎI THƯỜNG GẶP:**\n";
-            foreach ($topQuestions->take(5) as $question) {
-                $message .= '• '.$question->metric_name.': '.$question->total." hỏi\n";
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => $message,
-                'data' => [
-                    'today_conversations' => $todayConversations,
-                    'week_conversations' => $weekConversations,
-                    'month_conversations' => $monthConversations,
-                    'avg_messages_per_conversation' => $avgPerConversation,
-                    'top_intents' => $topIntents,
-                    'top_products' => $topProducts,
-                    'top_questions' => $topQuestions,
-                ],
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi: '.$e->getMessage(),
-            ], 500);
+            $data = json_decode($raw, true);
+            return trim($data['candidates'][0]['content']['parts'][0]['text'] ?? '');
+        } catch (\Throwable $e) {
+            \Log::warning('ChatbotController Gemini error: ' . $e->getMessage());
+            return null;
         }
-    }
-
-    /**
-     * Track user interactions for analytics
-     */
-    private function trackMetric($metricType, $metricName, $conversationId = null)
-    {
-        try {
-            ChatbotAnalytic::create([
-                'conversation_id' => $conversationId,
-                'metric_type' => $metricType,
-                'metric_name' => $metricName,
-                'date' => now()->startOfDay(),
-            ]);
-        } catch (\Exception $e) {
-            // Silently fail, don't interrupt chat
-        }
-    }
-
-    /**
-     * Helper: Get status emoji
-     */
-    private function getStatusEmoji($status)
-    {
-        return match ($status) {
-            'pending' => '⏳',
-            'confirmed' => '✅',
-            'shipped' => '🚚',
-            'delivered' => '📦',
-            'cancelled' => '❌',
-            default => '❓',
-        };
-    }
-
-    /**
-     * Helper: Get Vietnamese status text
-     */
-    private function getStatusVietnamese($status)
-    {
-        return match ($status) {
-            'pending' => 'Đợi xác nhận',
-            'confirmed' => 'Đã xác nhận',
-            'shipped' => 'Đang giao hàng',
-            'delivered' => 'Đã giao',
-            'cancelled' => 'Đã hủy',
-            default => 'Không xác định',
-        };
-    }
-
-    /**
-     * Enhanced context-aware message processing
-     */
-    private function getConversationContext($conversation)
-    {
-        $messages = ChatbotMessage::where('conversation_id', $conversation->id)
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
-
-        return [
-            'last_intent' => $messages->first()?->metadata['intent'] ?? null,
-            'topics' => $messages->pluck('metadata.intent')->filter()->unique()->toArray(),
-            'products_discussed' => $messages->pluck('metadata.product_type')->filter()->unique()->toArray(),
-        ];
     }
 }
+

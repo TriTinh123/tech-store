@@ -18,7 +18,7 @@ class CODPayment implements PaymentGatewayInterface
 
         return [
             'success' => true,
-            'message' => 'Đơn hàng sẽ được giao. Vui lòng thanh toán khi nhận hàng',
+            'message' => 'Your order will be delivered. Please pay upon receipt',
             'order' => $order,
         ];
     }
@@ -31,7 +31,7 @@ class CODPayment implements PaymentGatewayInterface
         // COD doesn't need verification, mark as completed when delivered
         return [
             'success' => false,
-            'message' => 'COD không cần xác nhận trực tuyến',
+            'message' => 'COD does not require online confirmation',
         ];
     }
 
@@ -41,15 +41,15 @@ class CODPayment implements PaymentGatewayInterface
     public function getPaymentDetails($order)
     {
         return [
-            'title' => 'Thanh Toán Khi Nhận Hàng (COD)',
-            'description' => 'Bạn sẽ thanh toán '.number_format($order->total_amount, 0, ',', '.').'₫ khi nhân viên giao hàng tới.',
+            'title' => 'Cash on Delivery (COD)',
+            'description' => 'You will pay '.number_format($order->total_amount, 0, ',', '.').'₫ when the delivery person arrives.',
             'icon' => 'fas fa-hand-holding-usd',
             'color' => '#00a699',
-            'note' => 'Phí giao hàng có thể được tính thêm tùy khu vực',
+            'note' => 'Shipping fee may vary by area',
             'steps' => [
-                'Xác nhận đơn hàng',
-                'Chờ giao hàng',
-                'Thanh toán khi nhận',
+                'Confirm order',
+                'Wait for delivery',
+                'Pay upon receipt',
             ],
         ];
     }

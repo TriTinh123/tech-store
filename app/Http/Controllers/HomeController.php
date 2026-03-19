@@ -38,7 +38,7 @@ class HomeController extends Controller
         }
 
         // Sort
-        $sort = $request->get('sort', 'newest');
+        $sort = $request->input('sort', 'newest');
         switch ($sort) {
             case 'price_low':
                 $query->orderBy('price', 'asc');
@@ -57,11 +57,30 @@ class HomeController extends Controller
         $categories = Category::all();
         $featured_products = Product::where('is_featured', true)->limit(6)->get();
 
+        // Flash sale: rotate 5 different products each day using today's date as seed
+        $allIds = Product::pluck('id')->toArray();
+        $daySeed = (int) date('Ymd'); // e.g. 20260317
+        mt_srand($daySeed);
+        shuffle($allIds);
+        $flashSaleIds = array_slice($allIds, 0, 10);
+        $flashSaleProducts = Product::whereIn('id', $flashSaleIds)->get()->sortBy(function($p) use ($flashSaleIds) {
+            return array_search($p->id, $flashSaleIds);
+        })->values();
+
+        // Generate a daily discount % per flash sale product (10–35%), seeded by day+product id
+        $flashSaleDiscounts = [];
+        foreach ($flashSaleProducts as $product) {
+            mt_srand($daySeed + $product->id);
+            $flashSaleDiscounts[$product->id] = mt_rand(10, 35);
+        }
+
         return view('home', [
             'products' => $products,
             'categories' => $categories,
             'featured_products' => $featured_products,
             'current_sort' => $sort,
+            'flashSaleProducts' => $flashSaleProducts,
+            'flashSaleDiscounts' => $flashSaleDiscounts,
         ]);
     }
 

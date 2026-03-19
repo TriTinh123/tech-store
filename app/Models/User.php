@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Order;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -42,6 +43,14 @@ class User extends Authenticatable
         'phone',
         'address',
         'is_blocked',
+        'security_question',
+        'security_answer',
+        'face_descriptor',
+        'face_photo',
+        'known_ips',
+        'known_devices',
+        'last_login_at',
+        'failed_login_count',
     ];
 
     /**
@@ -62,8 +71,14 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'email_verified_at'   => 'datetime',
+            'last_login_at'       => 'datetime',
+            'password'            => 'hashed',
+            'security_answer'     => 'hashed',
+            'known_ips'           => 'array',
+            'known_devices'       => 'array',
+            'face_descriptor'     => 'array',
+            'is_blocked'          => 'boolean',
         ];
     }
 
@@ -84,170 +99,10 @@ class User extends Authenticatable
     }
 
     /**
-     * Get wishlist for this user
-     */
-    public function wishlists()
-    {
-        return $this->hasMany(Wishlist::class);
-    }
-
-    /**
-     * Get comparisons for this user
-     */
-    public function comparisons()
-    {
-        return $this->hasMany(Comparison::class);
-    }
-
-    /**
      * Get orders for this user
      */
     public function orders()
     {
         return $this->hasMany(Order::class);
-    }
-
-    /**
-     * Get chatbot conversations for this user
-     */
-    public function chatbotConversations()
-    {
-        return $this->hasMany(ChatbotConversation::class);
-    }
-
-    /**
-     * Get user preferences
-     */
-    public function preferences()
-    {
-        return $this->hasOne(UserPreference::class);
-    }
-
-    /**
-     * Get suspicious login attempts
-     */
-    public function suspiciousLogins()
-    {
-        return $this->hasMany(SuspiciousLogin::class);
-    }
-
-    /**
-     * Get login logs for this user
-     */
-    public function loginLogs()
-    {
-        return $this->hasMany(LoginLog::class);
-    }
-
-    /**
-     * Three-Factor Authentication
-     */
-    public function threeFactorAuth()
-    {
-        return $this->hasMany(ThreeFactorAuthentication::class);
-    }
-
-    /**
-     * Security answers for this user
-     */
-    public function securityAnswers()
-    {
-        return $this->hasMany(UserSecurityAnswer::class);
-    }
-
-    /**
-     * Login attempts for this user
-     */
-    public function loginAttempts()
-    {
-        return $this->hasMany(LoginAttempt::class);
-    }
-
-    /**
-     * Security alerts for this user
-     */
-    public function securityAlerts()
-    {
-        return $this->hasMany(SecurityAlert::class);
-    }
-
-    /**
-     * User sessions for this user
-     */
-    public function sessions()
-    {
-        return $this->hasMany(UserSession::class);
-    }
-
-    /**
-     * Auto responses triggered by anomalies for this user
-     */
-    public function autoResponses()
-    {
-        return $this->hasMany(AutoResponse::class);
-    }
-
-    /**
-     * IPs blocked by this admin
-     */
-    public function blockedIps()
-    {
-        return $this->hasMany(BlockedIp::class, 'blocked_by_admin_id');
-    }
-
-    /**
-     * Auto responses manually triggered by this admin
-     */
-    public function triggeredAutoResponses()
-    {
-        return $this->hasMany(AutoResponse::class, 'triggered_by_admin_id');
-    }
-
-    /**
-     * Auto responses reviewed by this admin
-     */
-    public function reviewedAutoResponses()
-    {
-        return $this->hasMany(AutoResponse::class, 'reviewed_by_admin_id');
-    }
-
-    /**
-     * User's notifications
-     */
-    public function notifications()
-    {
-        return $this->hasMany(Notification::class);
-    }
-
-    /**
-     * User's notification preferences
-     */
-    public function notificationPreferences()
-    {
-        return $this->hasOne(NotificationPreference::class);
-    }
-
-    /**
-     * User's notification logs
-     */
-    public function notificationLogs()
-    {
-        return $this->hasMany(NotificationLog::class);
-    }
-
-    /**
-     * Check if user has 3FA enabled
-     */
-    public function has3FAEnabled()
-    {
-        return $this->securityAnswers()->exists();
-    }
-
-    /**
-     * Get current pending 3FA verification
-     */
-    public function pendingThreeFactorAuth()
-    {
-        return $this->threeFactorAuth()->where('is_verified', false)->latest()->first();
     }
 }

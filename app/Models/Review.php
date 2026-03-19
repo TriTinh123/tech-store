@@ -5,6 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Review Model
+ *
+ * @property int $id
+ * @property int $product_id
+ * @property int $user_id
+ * @property string $user_name
+ * @property string $user_email
+ * @property int $rating
+ * @property string|null $comment
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ */
 class Review extends Model
 {
     use HasFactory;

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Mail\PasswordResetMail;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -13,13 +14,13 @@ use Illuminate\Support\Str;
 
 class PasswordResetController extends Controller
 {
-    // Trang quên mật khẩu
+    // Forgot password page
     public function forgot()
     {
         return view('auth.forgot-password');
     }
 
-    // Gửi email reset
+    // Send reset email
     public function sendReset(Request $request)
     {
         $request->validate(['email' => 'required|email|exists:users']);
@@ -34,20 +35,20 @@ class PasswordResetController extends Controller
             'created_at' => now(),
         ]);
 
-        // Gửi email reset
+        // Send reset email
         $resetLink = route('password.reset', ['token' => $token, 'email' => $user->email]);
         Mail::send(new PasswordResetMail($user, $resetLink));
 
-        return redirect()->back()->with('success', 'Hãy kiểm tra email của bạn để đặt lại mật khẩu!');
+        return redirect()->back()->with('success', 'Please check your email to reset your password!');
     }
 
-    // Trang reset mật khẩu
+    // Reset password page
     public function reset($token, $email)
     {
         $user = User::where('email', $email)->first();
 
         if (! $user) {
-            return redirect()->route('password.forgot')->with('error', 'Email không tồn tại');
+            return redirect()->route('password.forgot')->with('error', 'Email not found');
         }
 
         $resetRecord = DB::table('password_reset_tokens')
@@ -55,13 +56,18 @@ class PasswordResetController extends Controller
             ->first();
 
         if (! $resetRecord || ! Hash::check($token, $resetRecord->token)) {
-            return redirect()->route('password.forgot')->with('error', 'Token không hợp lệ');
+            return redirect()->route('password.forgot')->with('error', 'Invalid token');
+        }
+
+        if (Carbon::parse($resetRecord->created_at)->addMinutes(60)->isPast()) {
+            DB::table('password_reset_tokens')->where('email', $email)->delete();
+            return redirect()->route('password.forgot')->with('error', 'Password reset link has expired (60 minutes). Please request a new one.');
         }
 
         return view('auth.reset-password', compact('token', 'email'));
     }
 
-    // Xác nhận reset mật khẩu
+    // Confirm password reset
     public function updateReset(Request $request)
     {
         $validated = $request->validate([
@@ -75,7 +81,12 @@ class PasswordResetController extends Controller
             ->first();
 
         if (! $resetRecord || ! Hash::check($validated['token'], $resetRecord->token)) {
-            return redirect()->route('password.forgot')->with('error', 'Token không hợp lệ hoặc đã hết hạn');
+            return redirect()->route('password.forgot')->with('error', 'Invalid or expired token');
+        }
+
+        if (Carbon::parse($resetRecord->created_at)->addMinutes(60)->isPast()) {
+            DB::table('password_reset_tokens')->where('email', $validated['email'])->delete();
+            return redirect()->route('password.forgot')->with('error', 'Password reset link has expired (60 minutes). Please request a new one.');
         }
 
         User::where('email', $validated['email'])->update([
@@ -84,6 +95,6 @@ class PasswordResetController extends Controller
 
         DB::table('password_reset_tokens')->where('email', $validated['email'])->delete();
 
-        return redirect()->route('login')->with('success', 'Mật khẩu đã được reset. Hãy đăng nhập!');
+        return redirect()->route('login')->with('success', 'Password has been reset. Please log in!');
     }
 }

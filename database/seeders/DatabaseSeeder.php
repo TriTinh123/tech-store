@@ -16,10 +16,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Tạo 10 user ngẫu nhiên
+        // Create 10 random users
         User::factory(10)->create();
 
-        // Tạo các user test cụ thể
+        // Create specific test users
         User::create([
             'name' => 'Admin User',
             'email' => 'admin@test.com',
@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         User::create([
-            'name' => 'Nguyễn Văn A',
+            'name' => 'Nguyen Van A',
             'email' => 'nguyenvana@test.com',
             'password' => Hash::make('123456'),
             'role' => 'user',
@@ -37,7 +37,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         User::create([
-            'name' => 'Trần Thị B',
+            'name' => 'Tran Thi B',
             'email' => 'tranthib@test.com',
             'password' => Hash::make('password'),
             'role' => 'user',
@@ -55,8 +55,5 @@ class DatabaseSeeder extends Seeder
         // Seed categories and products
         $this->call(CategorySeeder::class);
         $this->call(PeripheralsSeeder::class);
-
-        // Seed security questions for 3FA
-        $this->call(SecurityQuestionSeeder::class);
     }
 }

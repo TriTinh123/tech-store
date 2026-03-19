@@ -16,11 +16,14 @@ class AdminMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         if (! auth()->check()) {
-            return redirect()->route('login');
+            // Store a dedicated flag so completeLogin() knows this request
+            // was an attempt to reach the admin panel, even in multi-step auth.
+            session(['auth.tried_admin' => true]);
+            return redirect()->guest(route('login'));
         }
 
         if (! auth()->user()->isAdmin()) {
-            return abort(403, 'Không có quyền truy cập. Chỉ Admin có thể truy cập trang này.');
+            return response(view('errors.admin_denied'), 403);
         }
 
         return $next($request);

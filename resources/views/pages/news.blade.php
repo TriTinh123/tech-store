@@ -1,60 +1,89 @@
 @extends('layouts.app')
-
-@section('title', 'Tin tức - TechStore')
+@section('title', 'Tech News — TechStore')
+@section('page_title', 'Tech News')
 
 @section('content')
-<div style="max-width: 1200px; margin: 40px auto; padding: 20px;">
-    <h1 style="font-size: 32px; margin-bottom: 20px; color: #333;">Tin tức công nghệ</h1>
-    <p style="color: #666; margin-bottom: 30px;">Cập nhật những tin tức mới nhất về phụ kiện công nghệ</p>
-    
-    <div style="display: grid; gap: 20px;">
-        <!-- News Item 1 -->
-        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; gap: 20px;">
-            <div style="flex: 0 0 200px;">
-                <img src="/Image/keyboard.jpg" alt="Bàn phím" style="width: 100%; height: 150px; object-fit: cover; border-radius: 4px;">
+<style>
+    .news-wrap { max-width:1100px; margin:0 auto; padding:36px 24px 56px; }
+    .news-sec-hdr { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:28px; }
+    .news-sec-title { font-size:22px; font-weight:800; color:#1a1f2e; position:relative; padding-left:14px; }
+    .news-sec-title::before { content:''; position:absolute; left:0; top:2px; bottom:2px; width:4px; background:linear-gradient(180deg,#00b894,#0984e3); border-radius:2px; }
+    .pg-news-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
+    .pg-nc { background:white; border-radius:14px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,.07); border:1.5px solid #e8edf2; transition:all .3s; text-decoration:none; color:inherit; display:block; }
+    .pg-nc:hover { box-shadow:0 10px 30px rgba(0,0,0,.12); transform:translateY(-6px); border-color:#00b894; }
+    .pg-nc-img-wrap { overflow:hidden; height:185px; }
+    .pg-nc-img { width:100%; height:185px; object-fit:cover; transition:transform .4s; }
+    .pg-nc:hover .pg-nc-img { transform:scale(1.07); }
+    .pg-nc-body { padding:18px; }
+    .pg-nc-cat { display:inline-block; background:#e6f7f4; color:#00b894; font-size:10px; font-weight:700; text-transform:uppercase; padding:3px 10px; border-radius:50px; margin-bottom:10px; letter-spacing:.4px; }
+    .pg-nc-ttl { font-size:14px; font-weight:700; color:#1a1f2e; line-height:1.5; margin-bottom:10px; }
+    .pg-nc:hover .pg-nc-ttl { color:#00b894; }
+    .pg-nc-desc { font-size:12px; color:#64748b; line-height:1.7; margin-bottom:12px; }
+    .pg-nc-meta { font-size:11px; color:#94a3b8; display:flex; gap:14px; }
+    .pg-nc-meta i { color:#00b894; }
+    @media(max-width:900px){.pg-news-grid{grid-template-columns:repeat(2,1fr);}}
+    @media(max-width:600px){.pg-news-grid{grid-template-columns:1fr;}}
+</style>
+<div class="news-wrap">
+    <div class="news-sec-hdr">
+        <div class="news-sec-title">📰 Latest Articles</div>
+        <span style="font-size:12px;color:#64748b">Tracking tech trends 2026</span>
+    </div>
+    <div class="pg-news-grid">
+        <a href="#" class="pg-nc">
+            <div class="pg-nc-img-wrap"><img src="/images/sptt1.jpg" alt="Gaming" class="pg-nc-img"></div>
+            <div class="pg-nc-body">
+                <span class="pg-nc-cat">Gaming</span>
+                <div class="pg-nc-ttl">Top 5 mechanical gaming keyboards in 2026 — Which one should you choose?</div>
+                <p class="pg-nc-desc">Mechanical gaming keyboards are becoming increasingly popular thanks to their durability, RGB lighting, and responsive switches. In this article, we review the top 5 mechanical keyboards in 2026 that offer the best performance for gamers.</p>
+                <div class="pg-nc-meta"><span><i class="fas fa-calendar-alt"></i> 03/02/2026</span><span><i class="fas fa-user"></i> TechStore</span></div>
             </div>
-            <div style="flex: 1;">
-                <h3 style="font-size: 16px; margin-bottom: 10px;"><a href="#" style="color: #333; text-decoration: none;">TOP 5 bàn phím cơ gaming tốt nhất 2026 - Chọn loại nào phù hợp?</a></h3>
-                <p style="color: #666; font-size: 14px; margin-bottom: 10px;">Khám phá những chiếc bàn phím cơ gaming hàng đầu năm 2026 với công nghệ mới nhất và hiệu suất vượt trội...</p>
-                <p style="color: #999; font-size: 12px;">📅 03/02/2026 | ✍️ TechStore</p>
+        </a>
+        <a href="#" class="pg-nc">
+            <div class="pg-nc-img-wrap"><img src="/images/sptt2.jpg" alt="Review" class="pg-nc-img"></div>
+            <div class="pg-nc-body">
+                <span class="pg-nc-cat">Review</span>
+                <div class="pg-nc-ttl">Wireless vs wired gaming mouse — Which is better for gamers in 2026?</div>
+                <p class="pg-nc-desc">Choosing between a wired and wireless gaming mouse can be difficult. This review compares latency, battery life, and performance to help gamers choose the best option for their gaming setup.</p>
+                <div class="pg-nc-meta"><span><i class="fas fa-calendar-alt"></i> 02/02/2026</span><span><i class="fas fa-user"></i> TechStore</span></div>
             </div>
-        </div>
-
-        <!-- News Item 2 -->
-        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; gap: 20px;">
-            <div style="flex: 0 0 200px;">
-                <img src="/Image/wired.jpg" alt="Chuột" style="width: 100%; height: 150px; object-fit: cover; border-radius: 4px;">
+        </a>
+        <a href="#" class="pg-nc">
+            <div class="pg-nc-img-wrap"><img src="/images/sptt3.jpg" alt="Setup" class="pg-nc-img"></div>
+            <div class="pg-nc-body">
+                <span class="pg-nc-cat">Setup</span>
+                <div class="pg-nc-ttl">Professional gaming headset — Best choices for streamers in 2026</div>
+                <p class="pg-nc-desc">A good gaming headset is essential for clear communication and immersive gameplay. This guide introduces several professional headsets suitable for streaming, gaming, and online meetings.</p>
+                <div class="pg-nc-meta"><span><i class="fas fa-calendar-alt"></i> 31/01/2026</span><span><i class="fas fa-user"></i> TechStore</span></div>
             </div>
-            <div style="flex: 1;">
-                <h3 style="font-size: 16px; margin-bottom: 10px;"><a href="#" style="color: #333; text-decoration: none;">Chuột gaming không dây vs có dây - Cái nào tốt hơn cho gamer?</a></h3>
-                <p style="color: #666; font-size: 14px; margin-bottom: 10px;">So sánh chi tiết giữa chuột gaming không dây và có dây để bạn lựa chọn sản phẩm phù hợp nhất...</p>
-                <p style="color: #999; font-size: 12px;">📅 02/02/2026 | ✍️ TechStore</p>
+        </a>
+        <a href="#" class="pg-nc">
+            <div class="pg-nc-img-wrap"><img src="/images/sptt4.jpg" alt="Technology" class="pg-nc-img"></div>
+            <div class="pg-nc-body">
+                <span class="pg-nc-cat">Technology</span>
+                <div class="pg-nc-ttl">Latest gaming monitors in 2026 — High refresh rate and 4K performance</div>
+                <p class="pg-nc-desc">Gaming monitors continue to evolve with higher refresh rates, better color accuracy, and faster response times. This article explores the latest monitor technologies designed for modern gamers.</p>
+                <div class="pg-nc-meta"><span><i class="fas fa-calendar-alt"></i> 29/01/2026</span><span><i class="fas fa-user"></i> TechStore</span></div>
             </div>
-        </div>
-
-        <!-- News Item 3 -->
-        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; gap: 20px;">
-            <div style="flex: 0 0 200px;">
-                <img src="/Image/gaming.jpg" alt="Tai nghe" style="width: 100%; height: 150px; object-fit: cover; border-radius: 4px;">
+        </a>
+        <a href="#" class="pg-nc">
+            <div class="pg-nc-img-wrap"><img src="/images/sptt1.jpg" alt="Tips" class="pg-nc-img"></div>
+            <div class="pg-nc-body">
+                <span class="pg-nc-cat">Tips &amp; Tricks</span>
+                <div class="pg-nc-ttl">7 tips to speed up your PC with budget accessories — Instant results</div>
+                <p class="pg-nc-desc">Simple but highly effective accessories to significantly boost work and gaming performance...</p>
+                <div class="pg-nc-meta"><span><i class="fas fa-calendar-alt"></i> 27/01/2026</span><span><i class="fas fa-user"></i> TechStore</span></div>
             </div>
-            <div style="flex: 1;">
-                <h3 style="font-size: 16px; margin-bottom: 10px;"><a href="#" style="color: #333; text-decoration: none;">Tai nghe gaming chuyên nghiệp - Lựa chọn tốt nhất cho streamer 2026</a></h3>
-                <p style="color: #666; font-size: 14px; margin-bottom: 10px;">Những chiếc tai nghe gaming chuyên nghiệp dành cho các streamer chuyên nghiệp với âm thanh sống động...</p>
-                <p style="color: #999; font-size: 12px;">📅 31/01/2026 | ✍️ TechStore</p>
+        </a>
+        <a href="#" class="pg-nc">
+            <div class="pg-nc-img-wrap"><img src="/images/sptt3.jpg" alt="Trends" class="pg-nc-img"></div>
+            <div class="pg-nc-body">
+                <span class="pg-nc-cat">Trends</span>
+                <div class="pg-nc-ttl">Peripheral Device Trends 2026 — Which tech is dominating?</div>
+                <p class="pg-nc-desc">A look back and predictions for the most prominent tech accessory trends in 2026 and beyond...</p>
+                <div class="pg-nc-meta"><span><i class="fas fa-calendar-alt"></i> 25/01/2026</span><span><i class="fas fa-user"></i> TechStore</span></div>
             </div>
-        </div>
-
-        <!-- News Item 4 -->
-        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; gap: 20px;">
-            <div style="flex: 0 0 200px;">
-                <img src="/Image/monitor.jpg" alt="Màn hình" style="width: 100%; height: 150px; object-fit: cover; border-radius: 4px;">
-            </div>
-            <div style="flex: 1;">
-                <h3 style="font-size: 16px; margin-bottom: 10px;"><a href="#" style="color: #333; text-decoration: none;">Màn hình 4K 144Hz - Chuẩn mực mới cho gaming cao cấp</a></h3>
-                <p style="color: #666; font-size: 14px; margin-bottom: 10px;">Tìm hiểu về những màn hình 4K 144Hz mới nhất với công nghệ hiển thị tiên tiến...</p>
-                <p style="color: #999; font-size: 12px;">📅 29/01/2026 | ✍️ TechStore</p>
-            </div>
-        </div>
+        </a>
     </div>
 </div>
 @endsection
