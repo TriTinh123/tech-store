@@ -12,7 +12,7 @@
             onerror="window._faceApiReady=false"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#0a0a1a;position:relative;overflow:hidden}
+body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px;background:#0a0a1a;position:relative;overflow-x:hidden;overflow-y:auto}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 20%,rgba(99,102,241,.18) 0%,transparent 60%),radial-gradient(ellipse 60% 60% at 80% 80%,rgba(139,92,246,.15) 0%,transparent 60%);pointer-events:none}
 .bg-blob{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;animation:floatBlob 8s ease-in-out infinite alternate}
 .bg-blob-1{width:500px;height:500px;background:rgba(99,102,241,.07);top:-100px;left:-100px}
@@ -21,7 +21,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .grid-pattern{position:fixed;inset:0;background-image:radial-gradient(rgba(255,255,255,.04) 1px,transparent 1px);background-size:32px 32px;pointer-events:none}
 
 /* Card */
-.card{position:relative;width:100%;max-width:460px;background:rgba(255,255,255,.03);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:32px 36px;box-shadow:0 32px 80px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden}
+.card{position:relative;width:100%;max-width:460px;background:rgba(255,255,255,.03);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:32px 36px;box-shadow:0 32px 80px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);overflow:visible;margin:auto}
 .card::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:60%;height:1px;background:linear-gradient(90deg,transparent,rgba(99,102,241,.8),transparent)}
 
 /* Header */

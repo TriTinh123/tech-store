@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Order Verification — {{ config('app.name') }}</title>
+    <title>Order Verification — <?php echo e(config('app.name')); ?></title>
     <link href="https://fonts.bunny.net/css?family=poppins:300,400,500,600,700" rel="stylesheet"/>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif}
@@ -75,8 +75,8 @@
 <body>
 <div class="card">
 
-    {{-- ── Header ────────────────────────────────────────────────────── --}}
-    @php
+    
+    <?php
         $level = $fraud['risk_level'] ?? 'medium';
         $headerColors = [
             'critical' => ['from'=>'#7f1d1d','to'=>'#991b1b','icon'=>'🚨'],
@@ -86,7 +86,7 @@
         ];
         $hc = $headerColors[$level] ?? $headerColors['high'];
         $barColor = ['critical'=>'#ef4444','high'=>'#f97316','medium'=>'#eab308','low'=>'#22c55e'][$level] ?? '#f97316';
-    @endphp
+    ?>
 
     <div class="header" style="background:linear-gradient(135deg,#1e3a5f,#1e40af)">
         <div class="icon-wrap" style="background:rgba(255,255,255,.15)">🔐</div>
@@ -95,45 +95,46 @@
            Enter the OTP sent to your email to continue.</p>
     </div>
 
-    {{-- ── Body ─────────────────────────────────────────────────────── --}}
+    
     <div class="body">
 
-        {{-- Flash messages --}}
-        @if(session('warning'))
-            <div class="flash-warning">{{ session('warning') }}</div>
-        @endif
-        @if(session('info'))
-            <div class="flash-info">{{ session('info') }}</div>
-        @endif
-        @if($errors->has('otp_code'))
-            <div class="flash-error">{{ $errors->first('otp_code') }}</div>
-        @endif
+        
+        <?php if(session('warning')): ?>
+            <div class="flash-warning"><?php echo e(session('warning')); ?></div>
+        <?php endif; ?>
+        <?php if(session('info')): ?>
+            <div class="flash-info"><?php echo e(session('info')); ?></div>
+        <?php endif; ?>
+        <?php if($errors->has('otp_code')): ?>
+            <div class="flash-error"><?php echo e($errors->first('otp_code')); ?></div>
+        <?php endif; ?>
 
-        {{-- Order summary --}}
+        
         <div class="order-box">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
                 <div>
                     <div class="label">Order Amount</div>
-                    <div class="amount">${{ number_format($total, 2) }}</div>
+                    <div class="amount">$<?php echo e(number_format($total, 2)); ?></div>
                 </div>
                 <div style="text-align:right">
                     <div class="label">Customer</div>
                     <div style="font-size:14px;font-weight:600;color:#e2e8f0;margin-top:2px">
-                        {{ $user->name }}
+                        <?php echo e($user->name); ?>
+
                     </div>
-                    <div style="font-size:11px;color:#64748b">{{ $user->email }}</div>
+                    <div style="font-size:11px;color:#64748b"><?php echo e($user->email); ?></div>
                 </div>
             </div>
 
 
         </div>
 
-        {{-- OTP form --}}
-        <form method="POST" action="{{ route('checkout.verify-purchase.submit') }}" id="otpForm">
-            @csrf
+        
+        <form method="POST" action="<?php echo e(route('checkout.verify-purchase.submit')); ?>" id="otpForm">
+            <?php echo csrf_field(); ?>
             <div class="otp-section">
                 <label for="otp_code">
-                    🔑 Enter OTP code (sent to {{ $user->email }})
+                    🔑 Enter OTP code (sent to <?php echo e($user->email); ?>)
                 </label>
                 <input
                     type="text"
@@ -154,25 +155,25 @@
             </button>
         </form>
 
-        {{-- Resend --}}
-        <form method="POST" action="{{ route('checkout.verify-purchase.resend') }}">
-            @csrf
+        
+        <form method="POST" action="<?php echo e(route('checkout.verify-purchase.resend')); ?>">
+            <?php echo csrf_field(); ?>
             <button type="submit" class="btn-resend">
                 📧 Resend OTP
             </button>
         </form>
 
-        {{-- Countdown --}}
+        
         <div class="countdown">
             Code expires in <span id="timer">10:00</span>
         </div>
 
     </div>
 
-    {{-- Footer --}}
+    
     <div class="footer-note">
         If you did not place this order, please
-        <a href="{{ route('login') }}">change your password immediately</a>
+        <a href="<?php echo e(route('login')); ?>">change your password immediately</a>
         or contact support.
     </div>
 </div>
@@ -203,3 +204,4 @@
 </script>
 </body>
 </html>
+<?php /**PATH C:\Users\ADMIN\ecomerce\resources\views/purchase-risk-challenge.blade.php ENDPATH**/ ?>
