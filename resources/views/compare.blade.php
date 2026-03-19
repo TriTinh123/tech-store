@@ -30,7 +30,7 @@
                     <th style="background:#f8fafc;padding:14px 18px;text-align:center;border-bottom:2px solid #e2e8f0;min-width:200px">
                         <div style="position:relative">
                             <button onclick="removeCompare({{ $p->id }}, this)" style="position:absolute;top:-8px;right:-8px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1" title="Delete">×</button>
-                            <img src="{{ $p->image ?? 'https://via.placeholder.com/120x120?text=No+Image' }}" alt="{{ $p->name }}" style="width:80px;height:80px;object-fit:contain;border-radius:8px;margin-bottom:8px">
+                            <img src="{{ $p->image ?? asset('images/no-image.svg') }}" alt="{{ $p->name }}" style="width:80px;height:80px;object-fit:contain;border-radius:8px;margin-bottom:8px">
                             <div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:4px">{{ $p->name }}</div>
                             <a href="{{ route('product.show', $p->id) }}" style="font-size:11px;color:#3b82f6;text-decoration:none"><i class="fas fa-eye"></i> View details</a>
                         </div>

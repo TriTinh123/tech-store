@@ -61,7 +61,7 @@
                 @if(($product->discount_percentage ?? 0) > 0)
                     <span class="pd-badge-discount">-{{ $product->discount_percentage }}%</span>
                 @endif
-                <img src="{{ $product->image ?? 'https://via.placeholder.com/400x400?text='.urlencode($product->name) }}" alt="{{ $product->name }}">
+                <img src="{{ $product->image ?? asset('images/no-image.svg') }}" alt="{{ $product->name }}">
             </div>
         </div>
 
@@ -210,7 +210,7 @@
         <div class="col-6 col-md-3">
             <div class="related-card h-100">
                 <a href="{{ route('product.show', $rp->id) }}">
-                    <img src="{{ $rp->image ?? 'https://via.placeholder.com/200?text='.urlencode($rp->name) }}" alt="{{ $rp->name }}">
+                    <img src="{{ $rp->image ?? asset('images/no-image.svg') }}" alt="{{ $rp->name }}">
                 </a>
                 <div class="p-3">
                     <a href="{{ route('product.show', $rp->id) }}" class="d-block fw-600 text-decoration-none mb-1" style="font-size:13px;color:var(--text);line-height:1.4;min-height:36px">{{ Str::limit($rp->name,50) }}</a>

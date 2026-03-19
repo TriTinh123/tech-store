@@ -94,7 +94,7 @@
                                     -{{ $product->discount_percentage }}%
                                 </span>
                             @endif
-                            <img src="{{ $product->image ?? 'https://via.placeholder.com/200x200?text=' . urlencode($product->name) }}{{ $product->image ? '?v=' . md5($product->updated_at) : '' }}" 
+                            <img src="{{ $product->image ?? asset('images/no-image.svg') }}" 
                                  alt="{{ $product->name }}" 
                                  style="max-width: 100%; max-height: 100%; object-fit: contain;">
                         </div>

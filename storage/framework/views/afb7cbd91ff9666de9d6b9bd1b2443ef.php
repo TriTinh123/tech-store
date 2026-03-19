@@ -54,7 +54,7 @@
                         <?php $__currentLoopData = $items; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <tr>
                             <td class="ps-4">
-                                <img src="<?php echo e($item['product']->image ?? 'https://via.placeholder.com/70x70?text=SP'); ?>" alt="<?php echo e($item['product']->name); ?>">
+                                <img src="<?php echo e($item['product']->image ?? asset('images/no-image.svg')); ?>" alt="<?php echo e($item['product']->name); ?>">
                             </td>
                             <td>
                                 <a href="<?php echo e(route('product.show', $item['product']->id)); ?>" class="fw-600 text-decoration-none" style="color:var(--text)"><?php echo e($item['product']->name); ?></a>

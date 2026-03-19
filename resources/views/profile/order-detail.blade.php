@@ -179,7 +179,7 @@
         <div class="od-item-row">
           @if(isset($item->product->image))
           <img src="{{ asset('storage/'.$item->product->image) }}" class="od-item-img" alt="{{ $item->product->name ?? '' }}"
-               onerror="this.src='https://via.placeholder.com/60x60/f4f7fa/94a3b8?text=IMG'">
+               onerror="this.src='{{ asset('images/no-image.svg') }}'">
           @else
           <div class="od-item-img-ph"><i class="fas fa-image"></i></div>
           @endif

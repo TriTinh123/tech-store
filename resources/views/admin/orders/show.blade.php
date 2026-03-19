@@ -141,7 +141,7 @@
         <div class="aod-item">
           @if(isset($item->product->image))
           <img src="{{ asset('storage/'.$item->product->image) }}" class="aod-item-img"
-               onerror="this.src='https://via.placeholder.com/52x52/f4f7fa/94a3b8?text=SP'" alt="">
+               onerror="this.src='{{ asset('images/no-image.svg') }}'" alt="">
           @else
           <div class="aod-item-img" style="display:flex;align-items:center;justify-content:center;color:#b2bec3"><i class="fas fa-image"></i></div>
           @endif

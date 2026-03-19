@@ -53,7 +53,7 @@
                         @foreach($items as $item)
                         <tr>
                             <td class="ps-4">
-                                <img src="{{ $item['product']->image ?? 'https://via.placeholder.com/70x70?text=SP' }}" alt="{{ $item['product']->name }}">
+                                <img src="{{ $item['product']->image ?? asset('images/no-image.svg') }}" alt="{{ $item['product']->name }}">
                             </td>
                             <td>
                                 <a href="{{ route('product.show', $item['product']->id) }}" class="fw-600 text-decoration-none" style="color:var(--text)">{{ $item['product']->name }}</a>

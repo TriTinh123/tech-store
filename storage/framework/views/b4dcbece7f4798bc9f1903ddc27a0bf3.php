@@ -618,7 +618,7 @@
         <div class="prod-card">
             <div class="prod-img">
                 <span class="bdg-sale" style="background:linear-gradient(135deg,#e84040,#c0392b)">⚡ -<?php echo e($discountPct); ?>%</span>
-                <img src="<?php echo e($product->image ?? 'https://via.placeholder.com/200x200?text='.urlencode($product->name)); ?><?php echo e($product->image ? '?v='.md5($product->updated_at) : ''); ?>" alt="<?php echo e($product->name); ?>" loading="lazy">
+                <img src="<?php echo e($product->image ?? asset('images/no-image.svg')); ?>" alt="<?php echo e($product->name); ?>" loading="lazy">
             </div>
             <div class="prod-body">
                 <a href="<?php echo e(route('product.show', $product->id)); ?>" class="prod-name"><?php echo e($product->name); ?></a>
@@ -662,7 +662,7 @@
         <div class="prod-card">
             <div class="prod-img">
                 <?php if($product->discount_percentage > 0): ?><span class="bdg-sale">-<?php echo e($product->discount_percentage); ?>%</span><?php endif; ?>
-                <img src="<?php echo e($product->image ?? 'https://via.placeholder.com/200x200?text='.urlencode($product->name)); ?><?php echo e($product->image ? '?v='.md5($product->updated_at) : ''); ?>" alt="<?php echo e($product->name); ?>" loading="lazy">
+                <img src="<?php echo e($product->image ?? asset('images/no-image.svg')); ?>" alt="<?php echo e($product->name); ?>" loading="lazy">
             </div>
             <div class="prod-body">
                 <a href="<?php echo e(route('product.show', $product->id)); ?>" class="prod-name"><?php echo e($product->name); ?></a>

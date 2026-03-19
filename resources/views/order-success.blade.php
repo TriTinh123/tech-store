@@ -193,7 +193,7 @@
             <div class="px-4 py-2">
                 @foreach($order->items as $item)
                 <div class="order-item">
-                    <img src="{{ $item->product->image ?? 'https://via.placeholder.com/60?text=SP' }}" alt="{{ $item->product_name }}">
+                    <img src="{{ $item->product->image ?? asset('images/no-image.svg') }}" alt="{{ $item->product_name }}">
                     <div style="flex:1">
                         <div class="fw-600" style="font-size:14px">{{ $item->product_name }}</div>
                         <div class="text-muted" style="font-size:12px">Quantity: {{ $item->quantity }}</div>

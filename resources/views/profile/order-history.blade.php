@@ -85,7 +85,7 @@
         <div class="oh-preview-item">
           @if(isset($item->product->image))
           <img src="{{ asset('storage/'.$item->product->image) }}" class="oh-item-thumb"
-               onerror="this.src='https://via.placeholder.com/48x48/f4f7fa/94a3b8?text=IMG'" alt="">
+               onerror="this.src='{{ asset('images/no-image.svg') }}'" alt="">
           @else
           <div class="oh-item-thumb-ph"><i class="fas fa-image"></i></div>
           @endif
