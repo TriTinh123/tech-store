@@ -66,6 +66,13 @@ class ProfileController extends Controller
         return redirect()->route('profile.show')->with('success', 'Password changed!');
     }
 
+    // Security settings page
+    public function security()
+    {
+        $user = auth()->user();
+        return view('profile.security', compact('user'));
+    }
+
     // Update security question
     public function updateSecurityQuestion(Request $request)
     {
@@ -79,7 +86,7 @@ class ProfileController extends Controller
             'security_answer'   => Hash::make(strtolower(trim($request->security_answer))),
         ]);
 
-        return redirect()->route('profile.show')->with('success', 'Security question updated successfully!');
+        return redirect()->route('profile.security')->with('success', 'Security question updated successfully!');
     }
 
     // View order history

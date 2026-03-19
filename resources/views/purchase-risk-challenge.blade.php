@@ -88,14 +88,11 @@
         $barColor = ['critical'=>'#ef4444','high'=>'#f97316','medium'=>'#eab308','low'=>'#22c55e'][$level] ?? '#f97316';
     @endphp
 
-    <div class="header" style="background:linear-gradient(135deg,{{ $hc['from'] }},{{ $hc['to'] }})">
-        <div class="icon-wrap" style="background:rgba(255,255,255,.15)">{{ $hc['icon'] }}</div>
-        <span class="badge badge-{{ $level }}">
-            Risk: {{ strtoupper($level) }}
-        </span>
-        <h1>Unusual Order Verification</h1>
-        <p>The system detected risk signals on this order.<br>
-           Please enter the OTP sent to your email.</p>
+    <div class="header" style="background:linear-gradient(135deg,#1e3a5f,#1e40af)">
+        <div class="icon-wrap" style="background:rgba(255,255,255,.15)">🔐</div>
+        <h1>Order Verification Required</h1>
+        <p>To protect your account, please verify this order.<br>
+           Enter the OTP sent to your email to continue.</p>
     </div>
 
     {{-- ── Body ─────────────────────────────────────────────────────── --}}

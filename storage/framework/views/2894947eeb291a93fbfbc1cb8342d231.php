@@ -99,160 +99,26 @@
 
                     <hr class="my-4">
 
-                    
-                    <h5 class="mb-3" style="color: #667eea;"><i class="fas fa-shield-alt"></i> Security Settings (3FA)</h5>
-
-                    
-                    <div class="card mb-3" style="border: 1px solid #e2e8f0; border-radius: 10px;">
-                        <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div>
-                                    <strong><i class="fas fa-question-circle text-primary"></i> Security Question</strong>
-                                    <?php if($user->security_question): ?>
-                                        <div class="mt-1 text-muted" style="font-size:13px;">
-                                            Current: <em><?php echo e($user->security_question); ?></em>
-                                        </div>
-                                        <span class="badge bg-success mt-1">Set</span>
-                                    <?php else: ?>
-                                        <div class="mt-1 text-muted" style="font-size:13px;">No security question set yet.</div>
-                                        <span class="badge bg-warning text-dark mt-1">Not set</span>
-                                    <?php endif; ?>
-                                </div>
-                                <button class="btn btn-sm btn-outline-secondary" type="button"
-                                        onclick="var f=document.getElementById('secQForm');f.style.display=f.style.display==='none'?'block':'none'">
-                                    <i class="fas fa-edit"></i> Update
-                                </button>
-                            </div>
-
-                            <div id="secQForm" style="display:<?php echo e(($user->security_question && !$errors->has('security_question') && !$errors->has('security_answer')) ? 'none' : 'block'); ?>">
-                                <form action="<?php echo e(route('profile.update-security-question')); ?>" method="POST">
-                                    <?php echo csrf_field(); ?>
-                                    <?php echo method_field('PUT'); ?>
-                                    <div class="mb-2">
-                                        <label class="form-label small fw-semibold">Question</label>
-                                        <select name="security_question" class="form-select form-select-sm <?php $__errorArgs = ['security_question'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>" required>
-                                            <option value="">— Select a question —</option>
-                                            <?php
-                                            $questions = [
-                                                'Family' => [
-                                                    'What was the name of your first pet?',
-                                                    "What was your childhood best friend's name?",
-                                                    "What is your mother's middle name?",
-                                                    'What is the name of your oldest sibling?',
-                                                ],
-                                                'Childhood & School' => [
-                                                    'What was the name of your elementary school?',
-                                                    'What was the name of your favorite teacher?',
-                                                    'What was your childhood nickname?',
-                                                    'What was your favorite subject in school?',
-                                                ],
-                                                'Location' => [
-                                                    'What city were you born in?',
-                                                    'What street did you grow up on?',
-                                                    'What city would you most like to live in?',
-                                                ],
-                                                'Interests' => [
-                                                    'What is your favorite movie?',
-                                                    'What is your favorite food?',
-                                                    'Who is your favorite athlete/sports player?',
-                                                    'Who is your favorite singer/band?',
-                                                ],
-                                            ];
-                                            $current = old('security_question', $user->security_question);
-                                            ?>
-                                            <?php $__currentLoopData = $questions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $group => $opts): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                <optgroup label="<?php echo e($group); ?>">
-                                                    <?php $__currentLoopData = $opts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $q): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                        <option value="<?php echo e($q); ?>" <?php if($current === $q): echo 'selected'; endif; ?>><?php echo e($q); ?></option>
-                                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                                </optgroup>
-                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                        </select>
-                                        <?php $__errorArgs = ['security_question'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?><div class="invalid-feedback"><?php echo e($message); ?></div><?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label small fw-semibold">Answer</label>
-                                        <input type="text" name="security_answer" class="form-control form-control-sm <?php $__errorArgs = ['security_answer'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>"
-                                               placeholder="Your answer (case-insensitive)" autocomplete="off" required>
-                                        <?php $__errorArgs = ['security_answer'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?><div class="invalid-feedback"><?php echo e($message); ?></div><?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
-                                    </div>
-                                    <button type="submit" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-save"></i> Save Question
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-
-                    
-                    <div class="card mb-3" style="border: 1px solid #e2e8f0; border-radius: 10px;">
-                        <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center gap-3">
-                                    <?php if($user->face_photo): ?>
-                                        <img src="<?php echo e($user->face_photo); ?>" alt="Your face"
-                                             style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:3px solid #22c55e;flex-shrink:0">
-                                    <?php else: ?>
-                                        <div style="width:56px;height:56px;border-radius:50%;background:#f1f5f9;border:2px dashed #cbd5e1;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                                            <i class="fas fa-camera" style="color:#94a3b8;font-size:20px"></i>
-                                        </div>
-                                    <?php endif; ?>
-                                    <div>
-                                        <strong><i class="fas fa-camera text-primary"></i> Face Profile (Biometric)</strong>
-                                        <?php if($user->face_descriptor): ?>
-                                            <div class="mt-1 text-muted" style="font-size:13px;">Face data enrolled and ready for biometric login.</div>
-                                            <span class="badge bg-success mt-1">Enrolled</span>
-                                        <?php else: ?>
-                                            <div class="mt-1 text-muted" style="font-size:13px;">No face data enrolled. Biometric 3FA will fall back to email confirmation.</div>
-                                            <span class="badge bg-warning text-dark mt-1">Not enrolled</span>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                                <a href="<?php echo e(route('auth.face.enroll.form')); ?>" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-<?php echo e($user->face_descriptor ? 'redo' : 'plus'); ?>"></i>
-                                    <?php echo e($user->face_descriptor ? 'Re-enroll' : 'Enroll Face'); ?>
-
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
                     <hr class="my-4">
 
                     <div class="d-grid gap-2">
+                        
+                        <a href="<?php echo e(route('profile.security')); ?>"
+                           style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;text-decoration:none;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;transition:background .15s"
+                           onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
+                            <div style="display:flex;align-items:center;gap:12px">
+                                <div style="width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                                    <i class="fas fa-shield-alt" style="color:#fff;font-size:13px"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size:14px;font-weight:600;color:#1e293b">Security</div>
+                                    <div style="font-size:12px;color:#64748b;margin-top:1px">3-step verification, Face ID, password</div>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-right" style="color:#cbd5e1;font-size:12px"></i>
+                        </a>
                         <a href="<?php echo e(route('profile.edit')); ?>" class="btn btn-primary btn-lg">
                             <i class="fas fa-edit"></i> Edit Info
-                        </a>
-                        <a href="<?php echo e(route('profile.change-password')); ?>" class="btn btn-warning btn-lg">
-                            <i class="fas fa-key"></i> Change Password
                         </a>
                         <a href="<?php echo e(route('orders.index')); ?>" class="btn btn-info btn-lg">
                             <i class="fas fa-shopping-bag"></i> Order History
@@ -311,6 +177,13 @@ unset($__errorArgs, $__bag); ?>
         border-bottom: 3px solid #667eea;
     }
 </style>
+
+<script>
+function toggleForm(id) {
+    var f = document.getElementById(id);
+    f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+</script>
 <?php $__env->stopSection(); ?>
 
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\ADMIN\ecomerce\resources\views/profile/show.blade.php ENDPATH**/ ?>

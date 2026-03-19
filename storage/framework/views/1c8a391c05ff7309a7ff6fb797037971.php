@@ -40,19 +40,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .card-title h1{font-size:22px;font-weight:800;color:#fff;letter-spacing:-.5px}
 .card-title p{font-size:13px;color:rgba(255,255,255,.45);margin-top:5px;line-height:1.5}
 
-/* Steps */
-.steps{display:flex;align-items:center;justify-content:center;margin:14px 0;gap:0}
-.step-item{display:flex;flex-direction:column;align-items:center;gap:4px}
-.step-circle{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;transition:all .3s}
-.step-circle.s-done{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;box-shadow:0 4px 14px rgba(34,197,94,.4)}
-.step-circle.s-active{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;box-shadow:0 4px 18px rgba(99,102,241,.6)}
-.step-circle.s-idle{background:rgba(255,255,255,.07);color:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.08)}
-.step-lbl{font-size:10px;font-weight:500;color:rgba(255,255,255,.3);white-space:nowrap}
-.step-lbl.sl-active{color:#a5b4fc;font-weight:700}
-.step-connector{width:36px;height:2px;margin-bottom:16px;border-radius:2px}
-.step-connector.sc-done{background:linear-gradient(90deg,#22c55e,#6366f1)}
-.step-connector.sc-idle{background:rgba(255,255,255,.08)}
-
 /* Alerts */
 .alert{border-radius:12px;padding:13px 16px;font-size:13px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;border:1px solid transparent}
 .alert-info{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.25);color:#93c5fd}
@@ -139,28 +126,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="card-title">
         <h1>OTP Verification</h1>
         <p>Enter the 6-digit code sent to your<br>registered email address</p>
-    </div>
-
-    <div class="steps">
-        <div class="step-item">
-            <div class="step-circle s-done"><i class="fa-solid fa-check"></i></div>
-            <div class="step-lbl">Login</div>
-        </div>
-        <div class="step-connector sc-done"></div>
-        <div class="step-item">
-            <div class="step-circle s-active">2</div>
-            <div class="step-lbl sl-active">OTP</div>
-        </div>
-        <div class="step-connector sc-idle"></div>
-        <div class="step-item">
-            <div class="step-circle s-idle"><i class="fa-solid fa-robot" style="font-size:11px"></i></div>
-            <div class="step-lbl">AI</div>
-        </div>
-        <div class="step-connector sc-idle"></div>
-        <div class="step-item">
-            <div class="step-circle s-idle">3</div>
-            <div class="step-lbl">3FA</div>
-        </div>
     </div>
 
     <?php if(session('info')): ?>

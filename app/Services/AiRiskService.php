@@ -22,6 +22,43 @@ class AiRiskService
      */
     public function assess(Request $request, User $user): array
     {
+        // ── Trusted device/IP shortcut ────────────────────────────────────────────
+        // If the user is logging in from a known IP with a known device,
+        // OTP has already confirmed identity → skip AI scoring, return LOW risk.
+        // This mirrors how Google/Apple treat recognised devices.
+        $isNewIp     = $this->isNewIp($request->ip(), $user);
+        $isNewDevice = $isNewIp === 0 ? 0 : $this->isNewDevice($request, $user);
+
+        if ($isNewIp === 0 && $isNewDevice === 0) {
+            // Even on trusted devices, too many recent failures = account under attack → 3FA
+            $failures = $this->recentFailures($user);
+            if ($failures >= 5) {
+                return [
+                    'risk_score'         => 0.9,
+                    'risk_numeric'       => 90,
+                    'risk_level'         => 'high',
+                    'is_anomaly'         => true,
+                    'requires_3fa'       => true,
+                    'explanation'        => ["{$failures} failed login attempts in last hour — 3FA required even on trusted device"],
+                    'recommendation'     => '⚠️ Too many failures. 3FA required.',
+                    'ip_address'         => $request->ip(),
+                    'device_fingerprint' => $this->deviceFingerprint($request),
+                ];
+            }
+
+            return [
+                'risk_score'         => 0.05,
+                'risk_numeric'       => 10,
+                'risk_level'         => 'low',
+                'is_anomaly'         => false,
+                'requires_3fa'       => false,
+                'explanation'        => ['Recognised device and IP — trusted session'],
+                'recommendation'     => '✅ Trusted device. No additional verification needed.',
+                'ip_address'         => $request->ip(),
+                'device_fingerprint' => $this->deviceFingerprint($request),
+            ];
+        }
+
         $payload = $this->buildPayload($request, $user);
 
         try {
@@ -108,19 +145,31 @@ class AiRiskService
 
     private function recentFailures(User $user): int
     {
-        return \App\Models\LoginAttempt::where('user_id', $user->id)
-            ->where('password_ok', false)
-            ->where('created_at', '>=', now()->subHour())
-            ->count();
+        $query = \App\Models\LoginAttempt::where('user_id', $user->id)
+            ->where('password_ok', false);
+
+        // Only count failures that happened AFTER the last successful login.
+        // This resets the counter once the user successfully authenticates,
+        // so old failures don't penalise future legitimate logins.
+        if ($user->last_login_at) {
+            $query->where('created_at', '>=', $user->last_login_at);
+        } else {
+            $query->where('created_at', '>=', now()->subHour());
+        }
+
+        return $query->count();
     }
 
     /**
-     * Count all login attempts (successful + failed) for this user in the last 24h.
-     * High velocity indicates automated/brute-force activity.
+     * Count successful logins (password + OTP both passed) in the last 24h.
+     * Failed password attempts are already captured in recentFailures(), so exclude
+     * them here to avoid counting one real login session multiple times.
+     * High velocity indicates suspicious repeated re-authentication.
      */
     private function sessionVelocity(User $user): int
     {
         return \App\Models\LoginAttempt::where('user_id', $user->id)
+            ->where('password_ok', true)
             ->where('created_at', '>=', now()->subHours(24))
             ->count();
     }
@@ -184,16 +233,21 @@ class AiRiskService
 
     private function fallback(Request $request, User $user): array
     {
-        $failures = $this->recentFailures($user);
+        // Only count failures within the last 30 minutes to avoid penalising
+        // users for old failed attempts made hours ago.
+        $failures = \App\Models\LoginAttempt::where('user_id', $user->id)
+            ->where('password_ok', false)
+            ->where('created_at', '>=', now()->subMinutes(30))
+            ->count();
 
-        if ($failures >= 3) {
+        if ($failures >= 5) {
             return [
                 'risk_score'     => 0.9,
                 'risk_numeric'   => 90,
                 'risk_level'     => 'high',
                 'is_anomaly'     => true,
                 'requires_3fa'   => true,
-                'explanation'    => ['AI service unavailable — elevated risk: ' . $failures . ' failed login attempts detected'],
+                'explanation'    => ['AI service unavailable — elevated risk: ' . $failures . ' failed login attempts in last 30 minutes'],
                 'recommendation' => '⚠️ AI offline but high risk detected. 3FA required.',
                 'ip_address'     => $request->ip(),
                 'device_fingerprint' => $this->deviceFingerprint($request),

@@ -16,7 +16,6 @@ class ThreeFactorConfirmMail extends Mailable
         public readonly string $confirmUrl,
         public readonly string $userName,
         public readonly string $ipAddress,
-        public readonly string $riskLevel,
     ) {}
 
     public function envelope(): Envelope

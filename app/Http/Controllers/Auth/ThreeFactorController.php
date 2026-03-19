@@ -28,7 +28,7 @@ class ThreeFactorController extends Controller
         return sqrt($sum);
     }
 
-    /** GET /auth/3fa — show 3FA challenge with AI risk summary */
+    /** GET /auth/3fa — show 3FA challenge */
     public function show()
     {
         $userId   = session('auth.pending_user_id');
@@ -40,7 +40,7 @@ class ThreeFactorController extends Controller
 
         $user = User::findOrFail($userId);
 
-        return view('auth.3fa-challenge', compact('user', 'riskData'));
+        return view('auth.3fa-challenge', compact('user'));
     }
 
     /** POST /auth/3fa — verify the third factor */
@@ -144,7 +144,6 @@ class ThreeFactorController extends Controller
             confirmUrl: $confirmUrl,
             userName:   $user->name,
             ipAddress:  $request->ip(),
-            riskLevel:  $riskData['risk_level'] ?? 'high',
         ));
 
         return back()->with('email_confirm_sent', 'Confirmation email sent to ' . $user->email . '. Please check your inbox and click the link within 15 minutes.');

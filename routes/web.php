@@ -133,6 +133,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::get('/profile/change-password', [ProfileController::class, 'editPassword'])->name('profile.change-password');
     Route::put('/profile/change-password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
+    Route::get('/profile/security', [ProfileController::class, 'security'])->name('profile.security');
     Route::put('/profile/security-question', [ProfileController::class, 'updateSecurityQuestion'])->name('profile.update-security-question');
     Route::get('/orders', [ProfileController::class, 'orderHistory'])->name('orders.index');
     Route::get('/orders/{id}', [ProfileController::class, 'orderDetail'])->name('orders.show');

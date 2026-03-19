@@ -23,7 +23,7 @@ class AdminMiddleware
         }
 
         if (! auth()->user()->isAdmin()) {
-            return response(view('errors.admin_denied'), 403);
+            return redirect()->route('home');
         }
 
         return $next($request);

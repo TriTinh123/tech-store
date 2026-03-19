@@ -30,29 +30,22 @@
 <body>
 <div class="wrap">
     <div class="header">
-        <span class="icon">🚨</span>
-        <h1>Security Login Confirmation</h1>
-        <p>AI detected unusual behavior in your login session</p>
+        <span class="icon">�</span>
+        <h1>Sign-in Confirmation Required</h1>
+        <p>We need to verify it's you before allowing access</p>
     </div>
 
     <div class="body">
         <p>Hello <strong>{{ $userName }}</strong>,</p>
         <p>
-            The AI system of <strong>{{ config('app.name') }}</strong> detected a login session
-            <strong>with risk level {{ strtoupper($riskLevel) }}</strong> from your account.
-            We need you to confirm this was you before allowing access.
+            Someone is attempting to sign in to your <strong>{{ config('app.name') }}</strong> account.
+            As an extra security step, we need you to confirm this was you.
         </p>
 
         <div class="info-box">
             <div class="row">
-                <span class="label">🌐 Address IP:</span>
+                <span class="label">🌐 IP Address:</span>
                 <span class="val">{{ $ipAddress }}</span>
-            </div>
-            <div class="row">
-                <span class="label">⚠️ Risk level:</span>
-                <span class="val">
-                    <span class="badge badge-{{ strtolower($riskLevel) }}">{{ strtoupper($riskLevel) }}</span>
-                </span>
             </div>
             <div class="row">
                 <span class="label">🕐 Time:</span>
