@@ -157,7 +157,7 @@ unset($__errorArgs, $__bag); ?>
                 </div>
                 <div class="rf-row">
                     <label><input type="checkbox" name="remember" <?php echo e(old('remember') ? 'checked' : ''); ?>> Remember me</label>
-                    <a href="#">Forgot password?</a>
+                    <a href="<?php echo e(route('password.forgot')); ?>">Forgot password?</a>
                 </div>
                 <button type="submit" class="btn-primary"><i class="fas fa-sign-in-alt"></i> Sign In</button>
                 <div class="divider">or</div>
