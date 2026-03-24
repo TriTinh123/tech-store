@@ -430,13 +430,23 @@ class AdminController extends Controller
         $aiUrl    = config('services.python_ai.url', 'http://127.0.0.1:5001');
         $demoData = null;
         $aiOnline = false;
+
+        // Check health first (fast), then fetch demo data separately
         try {
-            $resp = Http::timeout(3)->get("{$aiUrl}/demo");
-            if ($resp->successful()) {
-                $demoData = $resp->json();
+            $health = Http::timeout(5)->get("{$aiUrl}/health");
+            if ($health->successful()) {
                 $aiOnline = true;
             }
         } catch (\Throwable) {}
+
+        if ($aiOnline) {
+            try {
+                $resp = Http::timeout(10)->get("{$aiUrl}/demo");
+                if ($resp->successful()) {
+                    $demoData = $resp->json();
+                }
+            } catch (\Throwable) {}
+        }
 
         // Recent login attempts for live table
         $recentAttempts = LoginAttempt::with('user')->latest()->limit(10)->get();
