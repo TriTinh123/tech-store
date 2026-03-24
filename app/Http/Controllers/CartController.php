@@ -65,6 +65,27 @@ class CartController extends Controller
         return redirect()->route('cart.index')->with('success', 'Added to cart successfully');
     }
 
+    public function buyNow($id, Request $request)
+    {
+        $product = Product::find($id);
+        if (! $product) {
+            return redirect()->back()->with('error', 'Product not found');
+        }
+
+        $quantity = $request->input('quantity', 1);
+        $cart = session()->get('cart', []);
+
+        if (isset($cart[$id])) {
+            $cart[$id] += $quantity;
+        } else {
+            $cart[$id] = $quantity;
+        }
+
+        session()->put('cart', $cart);
+
+        return redirect()->route('checkout.show');
+    }
+
     public function remove($id)
     {
         $cart = session()->get('cart', []);

@@ -70,7 +70,7 @@
 
                 
                 <label class="gw-card <?php echo e(old('payment_gateway')=='bank_transfer'?'active':''); ?>" onclick="selectGW(this)">
-                    <span class="gw-badge badge-safe">Security cao</span>
+                    <span class="gw-badge badge-safe">High Security</span>
                     <input type="radio" name="payment_gateway" value="bank_transfer" <?php echo e(old('payment_gateway')=='bank_transfer'?'checked':''); ?> required>
                     <div class="gw-logo" style="background:#dbeafe;color:#1d4ed8"><i class="fas fa-university"></i></div>
                     <div>

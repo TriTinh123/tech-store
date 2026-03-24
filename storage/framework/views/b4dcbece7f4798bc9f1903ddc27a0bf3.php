@@ -633,6 +633,14 @@
                     <a href="<?php echo e(route('product.show', $product->id)); ?>" class="btn-vd"><i class="fas fa-eye"></i> Details</a>
                     <div class="btn-cw"><form action="<?php echo e(route('cart.add', $product->id)); ?>" method="POST" class="add-to-cart-form"><?php echo csrf_field(); ?><button type="submit" class="btn-cb"><i class="fas fa-shopping-cart"></i> Cart</button></form></div>
                 </div>
+                <?php if(auth()->guard()->check()): ?>
+                <form action="<?php echo e(route('cart.buy-now', $product->id)); ?>" method="POST" style="margin-top:8px">
+                    <?php echo csrf_field(); ?>
+                    <button type="submit" style="width:100%;padding:8px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;transition:.2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'"><i class="fas fa-bolt me-1"></i> Buy Now</button>
+                </form>
+                <?php else: ?>
+                <a href="<?php echo e(route('login')); ?>" style="display:block;margin-top:8px;width:100%;padding:8px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;"><i class="fas fa-bolt me-1"></i> Buy Now</a>
+                <?php endif; ?>
                 <?php if(auth()->guard()->check()): ?><button onclick="toggleCompare(<?php echo e($product->id); ?>, this)" data-id="<?php echo e($product->id); ?>" class="btn-cmp"><i class="fas fa-balance-scale"></i> Compare</button><?php endif; ?>
             </div>
         </div>
@@ -676,6 +684,14 @@
                     <a href="<?php echo e(route('product.show', $product->id)); ?>" class="btn-vd"><i class="fas fa-eye"></i> Details</a>
                     <div class="btn-cw"><form action="<?php echo e(route('cart.add', $product->id)); ?>" method="POST" class="add-to-cart-form"><?php echo csrf_field(); ?><button type="submit" class="btn-cb"><i class="fas fa-shopping-cart"></i> Cart</button></form></div>
                 </div>
+                <?php if(auth()->guard()->check()): ?>
+                <form action="<?php echo e(route('cart.buy-now', $product->id)); ?>" method="POST" style="margin-top:8px">
+                    <?php echo csrf_field(); ?>
+                    <button type="submit" style="width:100%;padding:8px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;transition:.2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'"><i class="fas fa-bolt me-1"></i> Buy Now</button>
+                </form>
+                <?php else: ?>
+                <a href="<?php echo e(route('login')); ?>" style="display:block;margin-top:8px;width:100%;padding:8px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;"><i class="fas fa-bolt me-1"></i> Buy Now</a>
+                <?php endif; ?>
                 <?php if(auth()->guard()->check()): ?><button onclick="toggleCompare(<?php echo e($product->id); ?>, this)" data-id="<?php echo e($product->id); ?>" class="btn-cmp"><i class="fas fa-balance-scale"></i> Compare</button><?php endif; ?>
             </div>
         </div>

@@ -166,7 +166,7 @@
                     <span class="info-val"><?php echo e(ucfirst(str_replace('_',' ',$order->payment_method))); ?></span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Status TT</span>
+                    <span class="info-label">Payment Status</span>
                     <span class="info-val">
                         <?php if($order->payment_status === 'completed' || $order->payment_status === 'paid'): ?>
                             <span style="background:#d1fae5;color:#065f46;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700"><i class="fas fa-check me-1"></i>Paid</span>
@@ -194,7 +194,7 @@
             <div class="px-4 py-2">
                 <?php $__currentLoopData = $order->items; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <div class="order-item">
-                    <img src="<?php echo e($item->product->image ?? 'https://via.placeholder.com/60?text=SP'); ?>" alt="<?php echo e($item->product_name); ?>">
+                    <img src="<?php echo e($item->product->image ?? asset('images/no-image.svg')); ?>" alt="<?php echo e($item->product_name); ?>">
                     <div style="flex:1">
                         <div class="fw-600" style="font-size:14px"><?php echo e($item->product_name); ?></div>
                         <div class="text-muted" style="font-size:12px">Quantity: <?php echo e($item->quantity); ?></div>

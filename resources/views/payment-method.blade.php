@@ -27,9 +27,7 @@
 {{-- Progress strip --}}
 <div class="steps-strip mb-4">
     <div class="step-s done"><i class="fas fa-check me-1"></i>Info</div>
-    <div class="step-s done"><i class="fas fa-check me-1"></i>Place Order</div>
-    <div class="step-s current"><i class="fas fa-wallet me-1"></i>Checkout</div>
-    <div class="step-s"><i class="fas fa-box me-1"></i>Complete</div>
+    <div class="step-s current"><i class="fas fa-check me-1"></i>Place Order</div>
 </div>
 
 @if(session('success'))

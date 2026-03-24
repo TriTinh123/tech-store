@@ -150,6 +150,22 @@
                                     </button>
                                 </form>
                             </div>
+                            @auth
+                            <form action="{{ route('cart.buy-now', $product->id) }}" method="POST" style="margin-top: 8px;">
+                                @csrf
+                                <button type="submit"
+                                        style="width: 100%; padding: 8px; background: linear-gradient(135deg,#f97316,#ea580c); color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: 700; transition: opacity 0.2s;"
+                                        onmouseover="this.style.opacity='.85';"
+                                        onmouseout="this.style.opacity='1';">
+                                    <i class="fas fa-bolt"></i> Buy Now
+                                </button>
+                            </form>
+                            @else
+                            <a href="{{ route('login') }}"
+                               style="display:block;margin-top:8px;width:100%;padding:8px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;border:none;border-radius:3px;font-size:12px;font-weight:700;text-align:center;text-decoration:none;">
+                                <i class="fas fa-bolt"></i> Buy Now
+                            </a>
+                            @endauth
                         </div>
                     </div>
                 @empty
