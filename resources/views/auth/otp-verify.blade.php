@@ -226,8 +226,14 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     boxes.forEach(function(box, i){
         box.addEventListener('input', function(){
             var v = this.value.replace(/\D/g,'');
-            this.value = v ? v[v.length-1] : '';
-            if(this.value && i < 5) boxes[i+1].focus();
+            // Handle multi-digit input (e.g. iOS OTP autofill fills the first box with all 6 digits)
+            if(v.length > 1){
+                v.split('').slice(0, 6).forEach(function(ch, j){ if(boxes[j]) boxes[j].value = ch; });
+                boxes[Math.min(v.length - 1, 5)].focus();
+            } else {
+                this.value = v ? v[0] : '';
+                if(this.value && i < 5) boxes[i+1].focus();
+            }
             sync();
         });
         box.addEventListener('keydown', function(e){
@@ -246,13 +252,24 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
     boxes[0] && boxes[0].focus();
 
+    var submitting = false;
     window.doVerify = function(){
+        if(submitting) return false;
+        submitting = true;
+        sync(); // ensure hidden field is up-to-date
         document.getElementById('successOverlay').classList.add('show');
+        // Let the form submit naturally — do NOT disable the button here
     };
+
+    // Safety-net: sync hidden field right before any form submission
+    form.addEventListener('submit', function(){
+        sync();
+    });
 
     @if($errors->has('otp_code'))
     grid.classList.add('shake');
     boxes.forEach(function(b){ b.value=''; b.classList.remove('filled','done'); });
+    sync(); // reset hidden field and disable button
     boxes[0].focus();
     @endif
 

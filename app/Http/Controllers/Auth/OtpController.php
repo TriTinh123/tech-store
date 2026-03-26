@@ -76,6 +76,19 @@ class OtpController extends Controller
         session(['auth.risk_data' => $riskData]);
 
         // ── Decision ──────────────────────────────────────────────────────
+        if (($riskData['action'] ?? null) === 'deny') {
+            session()->forget([
+                'auth.pending_user_id', 'auth.remember', 'auth.risk_data',
+                'auth.keystroke_speed_ms', 'auth.keystroke_irregularity',
+                'auth.click_count_per_min', 'auth.mouse_move_count', 'auth.mouse_avg_speed',
+                'auth.screen_w', 'auth.screen_h', 'auth.timezone',
+            ]);
+
+            return redirect()->route('login')->withErrors([
+                'email' => $riskData['recommendation'] ?? 'Login blocked by security policy.',
+            ]);
+        }
+
         if ($riskData['requires_3fa']) {
             // High / Critical risk → Factor 3 required
             return redirect()->route('auth.3fa');
@@ -125,6 +138,7 @@ class OtpController extends Controller
         session()->forget([
             'auth.pending_user_id', 'auth.remember', 'auth.risk_data',
             'auth.keystroke_speed_ms', 'auth.keystroke_irregularity',
+            'auth.click_count_per_min', 'auth.mouse_move_count', 'auth.mouse_avg_speed',
             'auth.screen_w', 'auth.screen_h', 'auth.timezone',
         ]);
 

@@ -42,6 +42,11 @@ class ProductController extends Controller
             case 'price-high':
                 $query->orderBy('price', 'desc');
                 break;
+            case 'bestseller':
+                $query->withSum('orderItems as sold_count', 'quantity')
+                    ->orderByDesc('sold_count')
+                    ->orderByDesc('rating');
+                break;
             case 'rating':
                 $query->orderBy('rating', 'desc');
                 break;

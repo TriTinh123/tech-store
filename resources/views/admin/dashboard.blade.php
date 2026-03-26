@@ -114,7 +114,7 @@ $dashCards = [
     <div class="col-lg-4">
         <div class="card h-100">
             <div class="card-header">
-                <h6>Featured Products</h6>
+                <h6>🏆 Best Sellers</h6>
             </div>
             @if($topProducts && count($topProducts) > 0)
             <div class="card-body p-0">
@@ -125,7 +125,7 @@ $dashCards = [
                     </div>
                     <div class="flex-1 min-w-0" style="flex:1;min-width:0">
                         <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $product->name }}</div>
-                        <div style="font-size:11px;color:var(--muted)">${{ number_format($product->price ?? 0, 2) }}</div>
+                        <div style="font-size:11px;color:var(--muted)">${{ number_format($product->price ?? 0, 2) }} • Sold: {{ (int)($product->sold_count ?? 0) }}</div>
                     </div>
                     @if(($product->rating ?? 0) > 0)
                     <div style="font-size:11px;color:#f59e0b;flex-shrink:0">

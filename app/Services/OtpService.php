@@ -7,7 +7,6 @@ use App\Models\OtpCode;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use Log;
 
 class OtpService
 {
@@ -23,7 +22,6 @@ class OtpService
         OtpCode::where('user_id', $user->id)->delete();
 
         $plain = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-Log::info("Generated OTP for user {$user->email}: {$plain} (hashed in DB)");
         OtpCode::create([
             'user_id'    => $user->id,
             'code'       => Hash::make($plain),

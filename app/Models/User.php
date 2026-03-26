@@ -23,6 +23,12 @@ use Illuminate\Notifications\Notifiable;
  * @property \Illuminate\Support\Carbon|null $last_login_at
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
+ * @property array|null $face_descriptor
+ * @property string|null $face_photo
+ * @property string|null $security_question
+ * @property string|null $security_answer
+ * @property array|null $known_ips
+ * @property array|null $known_devices
  * @mixin \Eloquent
  */
 class User extends Authenticatable

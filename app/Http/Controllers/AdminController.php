@@ -35,7 +35,11 @@ class AdminController extends Controller
             'totalProducts' => Product::count(),
             'totalUsers'    => User::where('role', 'user')->count(),
             'recentOrders'  => Order::latest()->take(5)->get(),
-            'topProducts'   => Product::orderBy('rating', 'desc')->take(5)->get(),
+            'topProducts'   => Product::withSum('orderItems as sold_count', 'quantity')
+                ->orderByRaw('COALESCE(sold_count, 0) DESC')
+                ->orderByDesc('rating')
+                ->take(5)
+                ->get(),
             'monthlyRevenue'=> Order::whereYear('created_at', date('Y'))
                 ->selectRaw('MONTH(created_at) as month, SUM(total_amount) as revenue')
                 ->groupBy('month')->get(),

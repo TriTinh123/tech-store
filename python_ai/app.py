@@ -441,7 +441,7 @@ def demo():
             "label": scenario.label,
             "description": scenario.description,
             "session": scenario.session,
-            "risk_score": round(risk.raw_score, 4),
+            "risk_score": round(risk.risk_score, 4),
             "risk_numeric": risk.risk_numeric,
             "risk_level": risk.risk_level,
             "is_anomaly": risk.is_anomaly,

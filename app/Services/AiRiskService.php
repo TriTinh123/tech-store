@@ -17,7 +17,7 @@ class AiRiskService
     }
 
     /**
-     * Call the Python FastAPI risk engine and return a structured result.
+        * Call the Python FastAPI risk engine and return a structured result.
      * Falls back to a safe LOW-risk result if the AI service is unavailable.
      */
     public function assess(Request $request, User $user): array
@@ -63,10 +63,10 @@ class AiRiskService
 
         try {
             $response = Http::timeout(4)
-                ->post("{$this->apiUrl}/score", $payload);
+                ->post("{$this->apiUrl}/decide", $payload);
 
             if ($response->successful()) {
-                $data = $response->json();
+                $data = $this->normalizeDecisionResponse($response->json());
                 // Attach device fingerprint for storage
                 $data['device_fingerprint'] = $this->deviceFingerprint($request);
                 $data['ip_address']         = $request->ip();
@@ -102,13 +102,27 @@ class AiRiskService
         $cartValue = collect(session('cart', []))
             ->sum(fn ($item) => ($item['price'] ?? 0) * ($item['qty'] ?? $item['quantity'] ?? 1));
 
+        $mouseMoveCountRaw = session('auth.mouse_move_count');
+        $mouseAvgSpeedRaw  = session('auth.mouse_avg_speed');
+        $hasMouseData      = $mouseMoveCountRaw !== null || $mouseAvgSpeedRaw !== null;
+        $mouseMoveCount    = (int) ($mouseMoveCountRaw ?? 0);
+        $mouseAvgSpeed     = (float) ($mouseAvgSpeedRaw ?? 0.0);
+        $mouseRisk         = $hasMouseData
+            ? $this->mouseBehaviorRisk($mouseMoveCount, $mouseAvgSpeed)
+            : 0.0;
+
         $isNewIp = $this->isNewIp($request->ip(), $user);
         // If the IP is already trusted, don't flag a device mismatch as suspicious
         // (fingerprints can drift from browser updates/cleared cookies; OTP already verified identity)
         $isNewDevice = $isNewIp === 0 ? 0 : $this->isNewDevice($request, $user);
 
+        $baseUaRisk = $this->uaRiskScore($request);
+        $uaRisk     = min(1.0, round($baseUaRisk + $mouseRisk, 4));
+
         return [
             'user_id'               => $user->id,
+            'ip'                    => $request->ip(),
+            'device_id'             => $this->deviceFingerprint($request),
             'hour_of_day'           => now()->hour,
             'is_weekend'            => now()->isWeekend() ? 1 : 0,
             'is_new_ip'             => $isNewIp,
@@ -117,10 +131,79 @@ class AiRiskService
             'keystroke_speed_ms'    => (float) session('auth.keystroke_speed_ms', 150),
             'keystroke_irregularity'=> (float) session('auth.keystroke_irregularity', 30),
             'click_count_per_min'   => (int)   session('auth.click_count_per_min', 30),
+            'mouse_move_count'      => $mouseMoveCount,
+            'mouse_avg_speed'       => $mouseAvgSpeed,
             'transaction_amount'    => round($cartValue / 1000, 2), // → k VND
             'session_velocity'      => $this->sessionVelocity($user),
-            'ua_risk_score'         => $this->uaRiskScore($request),
+            'ua_risk_score'         => $uaRisk,
+            'has_security_question' => ! empty($user->security_question) && ! empty($user->security_answer),
+            'has_biometric'         => is_array($user->face_descriptor) && count($user->face_descriptor) >= 64,
+            'account_age_days'      => (int) $user->created_at?->diffInDays(now()),
         ];
+    }
+
+    private function normalizeDecisionResponse(array $data): array
+    {
+        $riskNumeric = (int) ($data['risk_numeric'] ?? 20);
+        $riskLevel   = strtolower((string) ($data['risk_level'] ?? 'low'));
+        $score       = isset($data['risk_score'])
+            ? (float) $data['risk_score']
+            : $this->inferRiskScoreFromNumeric($riskNumeric);
+
+        $explanation = $data['explanation'] ?? [];
+        if (! is_array($explanation)) {
+            $explanation = [$explanation];
+        }
+
+        $recommendations = $data['recommendations'] ?? [];
+        if (! is_array($recommendations)) {
+            $recommendations = [$recommendations];
+        }
+
+        return [
+            'risk_score'      => round($score, 4),
+            'risk_numeric'    => $riskNumeric,
+            'risk_level'      => $riskLevel,
+            'is_anomaly'      => in_array($riskLevel, ['high', 'critical'], true)
+                || (bool) ($data['is_anomaly'] ?? false),
+            'requires_3fa'    => (bool) ($data['requires_3fa'] ?? false),
+            'explanation'     => array_values($explanation),
+            'recommendation'  => (string) ($data['reason']
+                ?? ($recommendations[0] ?? 'AI decision processed')),
+            'challenge_type'  => $data['challenge_type'] ?? null,
+            'decision_method' => $data['method'] ?? null,
+            'action'          => $data['action'] ?? null,
+        ];
+    }
+
+    private function inferRiskScoreFromNumeric(int $riskNumeric): float
+    {
+        $score = 0.5 - ($riskNumeric / 100);
+
+        return max(-0.5, min(0.5, $score));
+    }
+
+    private function mouseBehaviorRisk(int $moveCount, float $avgSpeed): float
+    {
+        $risk = 0.0;
+
+        if ($moveCount === 0) {
+            return 0.4;
+        }
+
+        if ($moveCount < 8) {
+            $risk += 0.2;
+        }
+
+        if ($avgSpeed > 1600) {
+            $risk += 0.35;
+        }
+
+        if ($moveCount >= 120 && $avgSpeed < 8) {
+            $risk += 0.25;
+        }
+
+        return min(1.0, $risk);
     }
 
     private function isNewIp(string $ip, User $user): int

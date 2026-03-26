@@ -62,6 +62,8 @@ class AuthenticatedSessionController extends Controller
             'auth.keystroke_speed_ms'      => (float) $request->input('keystroke_speed_ms', 150),
             'auth.keystroke_irregularity'  => (float) $request->input('keystroke_irregularity', 30),
             'auth.click_count_per_min'     => (int)   $request->input('click_count_per_min', 30),
+            'auth.mouse_move_count'        => (int)   $request->input('mouse_move_count', 0),
+            'auth.mouse_avg_speed'         => (float) $request->input('mouse_avg_speed', 0),
             'auth.screen_w'                => $request->input('screen_w', 1920),
             'auth.screen_h'                => $request->input('screen_h', 1080),
             'auth.timezone'                => $request->input('timezone', 'Asia/Ho_Chi_Minh'),
