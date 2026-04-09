@@ -49,38 +49,20 @@ class OtpController extends Controller
             ]);
         }
         // ── AI Risk Assessment ─────────────────────────────────────────────
-        // Demo mode: override AI với tín hiệu giả lập thay vì gọi AI thật
+        // Demo mode: feed simulated signals into the real AI engine so log entries
+        // are genuine AI output, not hardcoded values.
         if (session('auth.demo_mode') === '1') {
             $failedAttempts = (int) session('auth.demo_failed_attempts', 0);
             $newIp          = session('auth.demo_new_ip') === '1';
             $newDevice      = session('auth.demo_new_device') === '1';
             $geoChanged     = session('auth.demo_geo_changed') === '1';
-            $ipCount        = (int) session('auth.demo_ip_count', 0);
 
-            $isHigh = $failedAttempts >= 5 || ($newIp && $newDevice) || $geoChanged || $ipCount > 2;
-
-            // Build realistic explanations based on signals
-            $reasons = [];
-            if ($failedAttempts >= 5)      $reasons[] = "{$failedAttempts} failed login attempts in last hour — 3FA required even on trusted device";
-            elseif ($failedAttempts >= 1)  $reasons[] = "{$failedAttempts} failed login attempt(s) detected before successful sign-in";
-            if ($geoChanged)               $reasons[] = 'Sign-in origin differs from registered country — possible geo anomaly';
-            if ($ipCount > 2)             $reasons[] = "{$ipCount} distinct IP addresses used within 10-minute window";
-            if ($newIp && $newDevice)      $reasons[] = 'Unrecognised IP address and device fingerprint — first-time combination';
-            elseif ($newIp)               $reasons[] = 'Sign-in from an IP address not previously associated with this account';
-            elseif ($newDevice)           $reasons[] = 'New device detected — browser or OS fingerprint does not match known devices';
-            if (empty($reasons))          $reasons[] = 'Anomalous behavioural pattern detected by risk engine';
-
-            $riskLevel = $isHigh ? 'high' : 'medium';
-            $riskData  = [
-                'risk_level'     => $riskLevel,
-                'risk_numeric'   => $isHigh ? 80 : 45,
-                'risk_score'     => $isHigh ? 0.8 : 0.45,
-                'is_anomaly'     => true,
-                'requires_3fa'   => true,
-                'action'         => 'allow',
-                'explanation'    => $reasons,
-                'recommendation' => '',
+            $overrides = [
+                'failed_attempts' => $failedAttempts,
+                'is_new_ip'       => ($newIp || $geoChanged) ? 1 : 0,
+                'is_new_device'   => $newDevice ? 1 : 0,
             ];
+            $riskData = $this->aiRisk->assessWithOverrides($overrides, $request, $user);
         } else {
             $riskData = $this->aiRisk->assess($request, $user);
         }

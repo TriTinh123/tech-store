@@ -95,6 +95,34 @@ class AiRiskService
         return $this->fallback($request, $user);
     }
 
+    /**
+     * Build the real payload, merge in demo signal overrides, then call the AI engine.
+     * This ensures demo log entries are 100% authentic AI-generated results.
+     */
+    public function assessWithOverrides(array $overrides, Request $request, User $user): array
+    {
+        $payload = array_merge($this->buildPayload($request, $user), $overrides);
+
+        try {
+            $response = Http::timeout(4)
+                ->post("{$this->apiUrl}/decide", $payload);
+
+            if ($response->successful()) {
+                $data = $this->normalizeDecisionResponse($response->json());
+                $data['device_fingerprint'] = $this->deviceFingerprint($request);
+                $data['ip_address']         = $request->ip();
+                $data['requires_3fa']       = true;
+                return $data;
+            }
+
+            Log::warning('AI risk service returned HTTP ' . $response->status() . ' (demo override)');
+        } catch (\Throwable $e) {
+            Log::warning('AI risk service unavailable (demo override): ' . $e->getMessage());
+        }
+
+        return $this->fallback($request, $user);
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     private function buildPayload(Request $request, User $user): array
