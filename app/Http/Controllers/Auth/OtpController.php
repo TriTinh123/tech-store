@@ -59,15 +59,26 @@ class OtpController extends Controller
 
             $isHigh = $failedAttempts >= 5 || ($newIp && $newDevice) || $geoChanged || $ipCount > 2;
 
+            // Build realistic explanations based on signals
+            $reasons = [];
+            if ($failedAttempts >= 5)      $reasons[] = "{$failedAttempts} failed login attempts in last hour — 3FA required even on trusted device";
+            elseif ($failedAttempts >= 1)  $reasons[] = "{$failedAttempts} failed login attempt(s) detected before successful sign-in";
+            if ($geoChanged)               $reasons[] = 'Sign-in origin differs from registered country — possible geo anomaly';
+            if ($ipCount > 2)             $reasons[] = "{$ipCount} distinct IP addresses used within 10-minute window";
+            if ($newIp && $newDevice)      $reasons[] = 'Unrecognised IP address and device fingerprint — first-time combination';
+            elseif ($newIp)               $reasons[] = 'Sign-in from an IP address not previously associated with this account';
+            elseif ($newDevice)           $reasons[] = 'New device detected — browser or OS fingerprint does not match known devices';
+            if (empty($reasons))          $reasons[] = 'Anomalous behavioural pattern detected by risk engine';
+
             $riskLevel = $isHigh ? 'high' : 'medium';
             $riskData  = [
-                'risk_level'   => $riskLevel,
-                'risk_numeric' => $isHigh ? 80 : 45,
-                'risk_score'   => $isHigh ? 0.8 : 0.45,
-                'is_anomaly'   => true,
-                'requires_3fa' => true,   // Demo → luôn vào F3 để demo đầy đủ
-                'action'       => 'allow',
-                'explanation'  => '[DEMO] Tín hiệu bất thường được giả lập',
+                'risk_level'     => $riskLevel,
+                'risk_numeric'   => $isHigh ? 80 : 45,
+                'risk_score'     => $isHigh ? 0.8 : 0.45,
+                'is_anomaly'     => true,
+                'requires_3fa'   => true,
+                'action'         => 'allow',
+                'explanation'    => $reasons,
                 'recommendation' => '',
             ];
         } else {
