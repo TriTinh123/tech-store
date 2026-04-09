@@ -194,7 +194,7 @@ video{width:260px;height:195px;object-fit:cover;background:#0f172a;display:block
                 <div id="bioStatus"></div>
             </div>
 
-            <button type="submit" class="btn-primary" id="bioSubmit" disabled>
+            <button type="button" class="btn-primary" id="bioSubmit" disabled onclick="submitBioForm()">
                 <i class="fa-solid fa-check-circle"></i> Confirm &amp; Sign in
             </button>
         </form>
@@ -383,6 +383,16 @@ video{width:260px;height:195px;object-fit:cover;background:#0f172a;display:block
         }, 200);
     }
 
+    async function submitBioForm() {
+        try {
+            const res  = await fetch('/csrf-refresh');
+            const data = await res.json();
+            document.querySelector('#bioForm input[name="_token"]').value = data.token;
+        } catch (e) {
+            // proceed with existing token if refresh fails
+        }
+        document.getElementById('bioForm').submit();
+    }
 
 </script>
 </body>

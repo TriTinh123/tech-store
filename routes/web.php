@@ -107,6 +107,9 @@ Route::post('/forgot-password', [PasswordResetController::class, 'sendReset'])->
 Route::get('/reset-password/{token}', [PasswordResetController::class, 'reset'])->name('password.reset');
 Route::post('/reset-password', [PasswordResetController::class, 'updateReset'])->name('password.update');
 
+// CSRF token refresh (used by long-running pages like face scan)
+Route::get('/csrf-refresh', fn() => response()->json(['token' => csrf_token()]))->name('csrf.refresh');
+
 // Google OAuth
 Route::get('/auth/google', [SocialAuthController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
