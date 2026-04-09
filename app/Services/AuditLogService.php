@@ -13,20 +13,20 @@ use Illuminate\Support\Facades\Mail;
 /**
  * AuditLogService
  * ===============
- * Ghi audit log khi đăng nhập, gom nhóm feature theo userId/IP,
- * gửi AI phân tích (chỉ khi vượt threshold), xử lý kết quả.
+ * Records audit logs on login, aggregates features by userId/IP,
+ * sends to AI for analysis (only when thresholds exceeded), handles results.
  *
- * Kiến trúc tối ưu token:
- *   KHÔNG gửi raw log → chỉ gửi feature đã gom nhóm (số tổng hợp).
+ * Architecture:
+ *   Does NOT send raw logs — only sends aggregated feature numbers.
  */
 class AuditLogService
 {
     private const AI_URL       = 'http://127.0.0.1:5001/audit-log/analyze';
-    private const TIME_WINDOW  = 10; // phút — cửa sổ gom nhóm
+    private const TIME_WINDOW  = 10; // minutes — aggregation window
 
-    // Rule-based threshold → không cần gọi AI (tiết kiệm token)
-    private const FAIL_ATTACK  = 10; // ≥10 fail/window → attack ngay
-    private const FAIL_SUSPECT = 3;  // ≥3 fail/window → đưa vào AI
+    // Rule-based thresholds — no AI call needed for clear-cut cases
+    private const FAIL_ATTACK  = 10; // ≥10 failures/window → attack
+    private const FAIL_SUSPECT = 3;  // ≥3 failures/window → send to AI
 
     /**
      * Quick check: does this login attempt show suspicious signals?
@@ -78,7 +78,7 @@ class AuditLogService
     }
 
     /**
-     * Ghi một lần thử đăng nhập vào audit_logs, sau đó quyết định có cần AI không.
+     * Record a login attempt into audit_logs, then decide if AI analysis is needed.
      */
     public function record(Request $request, ?User $user, bool $passwordOk): AuditLog
     {
@@ -87,7 +87,7 @@ class AuditLogService
         $now = now();
         $win = $now->copy()->subMinutes(self::TIME_WINDOW);
 
-        // ── Gom feature trong TIME_WINDOW ──────────────────────────────────
+        // ── Aggregate features within TIME_WINDOW ───────────────────────────
         $base = LoginAttempt::where(function ($q) use ($user, $ip) {
             if ($user) $q->where('user_id', $user->id);
             else       $q->where('ip_address', $ip);
@@ -97,7 +97,7 @@ class AuditLogService
         $ipCount      = (clone $base)->distinct('ip_address')->count('ip_address');
         $deviceCount  = (clone $base)->distinct('user_agent')->count('user_agent');
 
-        // Geo: lấy country từ LoginAttempt cuối của user (nếu có)
+        // Geo: get country from user's most recent LoginAttempt (if any)
         $lastCountry     = null;
         $geoChanged      = false;
         if ($user) {
@@ -105,7 +105,7 @@ class AuditLogService
                 ->whereNotNull('geo_country')
                 ->latest()->first();
             $lastCountry = $prevLogin?->geo_country;
-            // So sánh với geo hiện tại (simple: dùng thuật toán AiRiskService nếu cần)
+            // Compare with current geo
             $geoChanged  = $lastCountry && $lastCountry !== 'VN' && $lastCountry !== null;
         }
 
@@ -117,7 +117,7 @@ class AuditLogService
             'geo_changed'     => $geoChanged ? 1 : 0,
         ];
 
-        // ── Rule fallback (không cần AI) ───────────────────────────────────
+        // ── Rule fallback (no AI needed) ──────────────────────────────────────
         if ($failedCount >= self::FAIL_ATTACK) {
             return $this->save($request, $user, $passwordOk, $fp, $features, [
                 'ai_result'      => 'attack',
@@ -128,7 +128,7 @@ class AuditLogService
             ]);
         }
 
-        // ── Chỉ gọi AI khi có dấu hiệu đáng ngờ (≥ FAIL_SUSPECT lần sai HOẶC IP/device đổi) ──
+        // ── Only call AI when there are suspicious signals ──────────────────
         $needsAi = ! $passwordOk
                 && ($failedCount >= self::FAIL_SUSPECT || $ipCount > 1 || $deviceCount > 1 || $geoChanged);
 
@@ -154,7 +154,7 @@ class AuditLogService
             'event'          => $event,
         ]);
 
-        // ── Xử lý hậu kết quả ─────────────────────────────────────────────
+        // ── Post-result handling ────────────────────────────────────────────────
         if ($aiResult) {
             $this->handleAiResult($aiResult, $user, $log);
         }
@@ -166,7 +166,8 @@ class AuditLogService
 
     private function save(Request $request, ?User $user, bool $passwordOk, string $fp, array $features, array $extra): AuditLog
     {
-        return AuditLog::create(array_merge([
+        /** @var AuditLog $log */
+        $log = new AuditLog(array_merge([  // @phpstan-ignore-line
             'user_id'            => $user?->id,
             'email'              => $user?->email ?? $request->input('email'),
             'ip_address'         => $request->ip(),
@@ -179,11 +180,13 @@ class AuditLogService
             'geo_changed'        => (bool) $features['geo_changed'],
             'raw_features'       => $features,
         ], $extra));
+        $log->save();
+        return $log;
     }
 
     /**
-     * Gửi feature đã gom nhóm lên Python AI endpoint /audit-log/analyze.
-     * KHÔNG gửi raw log — chỉ gửi 5 số tổng hợp → tiết kiệm token tối đa.
+     * Send aggregated features to Python AI endpoint /audit-log/analyze.
+     * Does NOT send raw logs — only 5 aggregated numbers.
      */
     private function callAi(array $features, ?User $user): ?array
     {
@@ -211,23 +214,23 @@ class AuditLogService
         $verdict = $result['result'] ?? 'normal';
 
         if ($verdict === 'attack' && $user) {
-            // Khóa tài khoản
+            // Lock account
             $user->update(['is_blocked' => true]);
             $log->update(['account_locked' => true]);
             Log::warning("AuditLog: account #{$user->id} LOCKED — AI detected attack.");
         }
 
         if (in_array($verdict, ['suspicious', 'attack']) && $user) {
-            // Gửi email cảnh báo
+            // Send security alert email
             try {
                 $subject = $verdict === 'attack'
-                    ? '🚨 Tài khoản bị tấn công — đã bị khóa'
-                    : '⚠️ Phát hiện hoạt động đáng ngờ';
+                    ? '🚨 Account under attack — temporarily locked'
+                    : '⚠️ Suspicious login activity detected';
                 $message = $verdict === 'attack'
-                    ? 'AI phát hiện tấn công brute-force. Tài khoản đã bị khóa tạm thời.'
-                    : 'Chúng tôi phát hiện hành vi đăng nhập bất thường. Hãy đổi mật khẩu ngay nếu không phải bạn.';
+                    ? 'AI detected a brute-force attack. Your account has been temporarily locked.'
+                    : 'We detected unusual login behaviour. Please change your password immediately if this was not you.';
 
-                \Illuminate\Support\Facades\Mail::raw(
+                Mail::raw(
                     "[{$subject}]\n\n{$message}\n\nRisk score: " . ($result['risk_score'] ?? 0),
                     function ($m) use ($user, $subject) {
                         $m->to($user->email)->subject($subject);
