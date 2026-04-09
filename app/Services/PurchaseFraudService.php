@@ -14,29 +14,29 @@ use Illuminate\Http\Request;
  * confirmation is required before the order can be placed.
  *
  * Risk signals (additive score):
- *  1. High order amount  (≥ 5 000 000 ₫ → +50 pts)
- *  2. Medium amount      (≥ 2 000 000 ₫ → +25 pts)
+ *  1. High order amount  (≥ $5,000 → +50 pts)
+ *  2. Medium amount      (≥ $2,000 → +25 pts)
  *  3. Unknown device     (fingerprint not in user.known_devices → +30 pts)
  *  4. Unknown IP address (IP not in user.known_ips → +15 pts)
  *  5. Recent login anomaly (last successful session was AI-flagged → +35 pts)
  *  6. Brute-force history (≥ 3 failed logins last hour → +20 pts)
  *
- * Requires OTP when total score ≥ 40  OR  order ≥ HIGH_AMOUNT.
+ * Requires OTP when total score ≥ 40  OR  order ≥ HIGH_AMOUNT ($5,000).
  */
 class PurchaseFraudService
 {
     /** Absolute threshold: always flag regardless of other signals */
-    const HIGH_AMOUNT   = 5_000_000;   // 5 million VND
+    const HIGH_AMOUNT   = 5_000;   // $5,000 USD
 
     /** Conditional threshold: flag only when combined with risk signals */
-    const MEDIUM_AMOUNT = 2_000_000;   // 2 million VND
+    const MEDIUM_AMOUNT = 2_000;   // $2,000 USD
 
     /**
      * Assess a purchase for fraud risk signals.
      *
      * @param  Request $request  Current HTTP request (for IP + device FP)
      * @param  User    $user     Authenticated user
-     * @param  float   $total    Cart total in VND
+     * @param  float   $total    Cart total in USD
      * @return array {
      *   risk_level   : 'low'|'medium'|'high'|'critical'
      *   risk_numeric : int (0-100)
@@ -53,12 +53,12 @@ class PurchaseFraudService
 
         // ── Signal 1: High order amount ────────────────────────────────────
         if ($total >= self::HIGH_AMOUNT) {
-            $reasons[] = 'Very high-value order ('
-                . number_format($total, 0, ',', '.') . ' ₫ ≥ 5.000.000 ₫)';
+            $reasons[] = 'Very high-value order ($'
+                . number_format($total, 2) . ' ≥ $5,000)';  
             $riskScore += 50;
         } elseif ($total >= self::MEDIUM_AMOUNT) {
-            $reasons[] = 'High-value order ('
-                . number_format($total, 0, ',', '.') . ' ₫ ≥ 2.000.000 ₫)';
+            $reasons[] = 'High-value order ($'
+                . number_format($total, 2) . ' ≥ $2,000)';  
             $riskScore += 25;
         }
 

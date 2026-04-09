@@ -62,6 +62,12 @@
                             Price: High to Low
                         </a>
                     </li>
+                    <li style="border-bottom: 1px solid #f0f0f0;">
+                        <a href="<?php echo e(route('products.index', array_merge(request()->query(), ['sort' => 'bestseller']))); ?>" 
+                           style="display: block; padding: 12px 15px; text-decoration: none; color: #333; <?php if(request('sort') == 'bestseller'): ?> background: #e8f8f5; color: #00b894; font-weight: 600; <?php endif; ?>">
+                            Best Seller
+                        </a>
+                    </li>
                     <li>
                         <a href="<?php echo e(route('products.index', array_merge(request()->query(), ['sort' => 'rating']))); ?>" 
                            style="display: block; padding: 12px 15px; text-decoration: none; color: #333; <?php if(request('sort') == 'rating'): ?> background: #e8f8f5; color: #00b894; font-weight: 600; <?php endif; ?>">
