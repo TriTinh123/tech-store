@@ -33,7 +33,7 @@ class AuthenticatedSessionController extends Controller
 
         $user = User::where('email', $credentials['email'])->first();
 
-        // ── Sai mật khẩu ──────────────────────────────────────────────────
+        // ── Wrong password ───────────────────────────────────────────────────
         if (! $user || ! Auth::validate($credentials)) {
             LoginAttempt::create([
                 'user_id'    => $user?->id,
@@ -56,7 +56,7 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
-        // ── Đúng mật khẩu: AI kiểm tra hành vi ───────────────────────────
+        // ── Correct password: AI behaviour check ─────────────────────────────
 
         // Demo attack: ≥10 fails → lock account immediately (real effect)
         if ($request->input('demo_mode') === '1' && (int) $request->input('demo_failed_attempts', 0) >= 10) {
