@@ -96,7 +96,7 @@ Route::middleware(['auth'])->group(function () {
 
 // Authentication
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login')->middleware('guest');
-Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware(['guest', 'throttle:10,1']);
+Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware(['guest', 'throttle:login']);
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout')->middleware('auth');
 Route::get('/register', [RegisteredUserController::class, 'create'])->name('register')->middleware('guest');
 Route::post('/register', [RegisteredUserController::class, 'store'])->middleware('guest');
@@ -116,7 +116,7 @@ Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleC
 
 // OTP (Factor 2) — session-guarded inside controller
 Route::get('/auth/otp', [OtpController::class, 'show'])->name('auth.otp');
-Route::post('/auth/otp', [OtpController::class, 'verify'])->name('auth.otp.verify')->middleware('throttle:10,1');
+Route::post('/auth/otp', [OtpController::class, 'verify'])->name('auth.otp.verify')->middleware('throttle:otp');
 Route::post('/auth/otp/resend', [OtpController::class, 'resend'])->name('auth.otp.resend')->middleware('throttle:5,1');
 
 // 3FA (Factor 3) — session-guarded inside controller

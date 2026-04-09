@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\AnalyzeLoginBehavior;
 use App\Models\AuditLog;
 use App\Models\LoginAttempt;
 use App\Models\User;
@@ -128,35 +129,23 @@ class AuditLogService
             ]);
         }
 
-        // ── Only call AI when there are suspicious signals ──────────────────
+        // ── Only dispatch async AI job when there are suspicious signals ──────────
         $needsAi = ! $passwordOk
                 && ($failedCount >= self::FAIL_SUSPECT || $ipCount > 1 || $deviceCount > 1 || $geoChanged);
 
-        $aiResult = null;
-        if ($needsAi) {
-            $aiResult = $this->callAi($features, $user);
-        }
-
         $event = $passwordOk ? 'login_success' : 'login_attempt';
-        if ($aiResult) {
-            $event = match ($aiResult['result'] ?? 'normal') {
-                'attack'     => 'attack',
-                'suspicious' => 'suspicious',
-                default      => $event,
-            };
-        }
 
         $log = $this->save($request, $user, $passwordOk, $fp, $features, [
-            'ai_result'      => $aiResult['result']     ?? null,
-            'ai_risk_score'  => $aiResult['risk_score'] ?? null,
-            'account_locked' => ($aiResult['result'] ?? '') === 'attack',
+            'ai_result'      => null,
+            'ai_risk_score'  => null,
+            'account_locked' => false,
             'email_sent'     => false,
             'event'          => $event,
         ]);
 
-        // ── Post-result handling ────────────────────────────────────────────────
-        if ($aiResult) {
-            $this->handleAiResult($aiResult, $user, $log);
+        // Dispatch async — does not block the login response
+        if ($needsAi) {
+            AnalyzeLoginBehavior::dispatch($features, $log->id, $user?->id);
         }
 
         return $log;
