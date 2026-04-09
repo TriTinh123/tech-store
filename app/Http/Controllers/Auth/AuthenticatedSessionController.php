@@ -110,6 +110,13 @@ class AuthenticatedSessionController extends Controller
             'auth.screen_h'               => $request->input('screen_h', 1080),
             'auth.timezone'               => $request->input('timezone', 'Asia/Ho_Chi_Minh'),
             'auth.tried_admin'            => $triedAdmin,
+            // Demo mode — lưu để OtpController đọc lại
+            'auth.demo_mode'              => $request->input('demo_mode', '0'),
+            'auth.demo_failed_attempts'   => (int) $request->input('demo_failed_attempts', 0),
+            'auth.demo_new_ip'            => $request->input('demo_new_ip', '0'),
+            'auth.demo_new_device'        => $request->input('demo_new_device', '0'),
+            'auth.demo_geo_changed'       => $request->input('demo_geo_changed', '0'),
+            'auth.demo_ip_count'          => (int) $request->input('demo_ip_count', 0),
         ]);
 
         app(OtpService::class)->send($user);
