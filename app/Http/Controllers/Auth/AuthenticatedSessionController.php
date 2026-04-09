@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\LoginAttempt;
 use App\Models\User;
+use App\Services\AuditLogService;
 use App\Services\OtpService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -40,6 +41,9 @@ class AuthenticatedSessionController extends Controller
                 'user_agent' => $request->userAgent(),
                 'password_ok'=> false,
             ]);
+
+            // ── Audit log ghi hành vi sai mật khẩu + gọi AI nếu cần ───────
+            app(AuditLogService::class)->record($request, $user, false);
 
             throw ValidationException::withMessages([
                 'email' => 'Invalid email or password.',

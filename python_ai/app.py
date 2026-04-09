@@ -453,5 +453,132 @@ def demo():
     return {"scenarios": results, "engine_version": "Isolation Forest v4.0"}
 
 
+# ── Audit-log behavior analysis endpoint ─────────────────────────────────────
+
+class AuditFeatureRequest(BaseModel):
+    """
+    Aggregated login behavior features — không phải raw log.
+    Chỉ gửi số liệu tổng hợp để tiết kiệm token tối đa.
+    """
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "failed_attempt": 7,
+                "ip_count": 3,
+                "device_count": 2,
+                "time_window_min": 10,
+                "geo_changed": 1,
+                "user_id": 5,
+            }
+        }
+    )
+    failed_attempt:  int   = Field(default=0, ge=0, description="Số lần sai mật khẩu trong time_window")
+    ip_count:        int   = Field(default=1, ge=1, description="Số IP khác nhau trong time_window")
+    device_count:    int   = Field(default=1, ge=1, description="Số thiết bị khác nhau trong time_window")
+    time_window_min: int   = Field(default=10, ge=1, description="Cửa sổ thời gian (phút)")
+    geo_changed:     int   = Field(default=0, ge=0, le=1, description="1 nếu quốc gia thay đổi")
+    user_id:         int   = Field(default=0, description="User ID (0 = ẩn danh)")
+
+
+class AuditAnalysisResponse(BaseModel):
+    result:     str  = Field(description="normal | suspicious | attack")
+    risk_score: int  = Field(description="0-100")
+    reasons:    List[str]
+    action:     str  = Field(description="none | send_email | lock_account")
+    features:   dict = Field(default_factory=dict)
+
+
+@app.post(
+    "/audit-log/analyze",
+    response_model=AuditAnalysisResponse,
+    summary="Phân tích hành vi đăng nhập từ audit log (token-optimized)",
+)
+def audit_analyze(req: AuditFeatureRequest):
+    """
+    Nhận feature đã gom nhóm (batch), chạy rule-engine + AI để phân loại:
+    - **normal**: hoạt động bình thường
+    - **suspicious**: đáng ngờ → gửi email cảnh báo
+    - **attack**: tấn công → khóa tài khoản + alert admin
+
+    ## Tối ưu chi phí token
+    - Chỉ nhận 5 con số tổng hợp (KHÔNG nhận raw log)
+    - Rule fallback tránh gọi AI với case rõ ràng
+    - AI chỉ dùng cho case mơ hồ (failed_attempt 3-9)
+    """
+    f = req.model_dump()
+    reasons: List[str] = []
+    risk = 0
+
+    # ── Rule fallback (không cần AI scoring) ─────────────────────────────
+    if f["failed_attempt"] >= 10:
+        return AuditAnalysisResponse(
+            result="attack", risk_score=100,
+            reasons=[f"Brute-force: {f['failed_attempt']} lần sai trong {f['time_window_min']} phút"],
+            action="lock_account", features=f,
+        )
+
+    if f["ip_count"] >= 5:
+        reasons.append(f"IP thay đổi liên tục: {f['ip_count']} IP khác nhau")
+        risk += 40
+
+    if f["device_count"] >= 4:
+        reasons.append(f"Thiết bị đổi liên tục: {f['device_count']} device")
+        risk += 30
+
+    if f["geo_changed"] == 1:
+        reasons.append("Đăng nhập từ quốc gia khác (geo change)")
+        risk += 20
+
+    # ── AI scoring cho case mơ hồ ─────────────────────────────────────────
+    if f["failed_attempt"] >= 3 and _engine is not None and _engine.is_fitted:
+        try:
+            # Map sang LoginSession features để chạy qua Isolation Forest
+            session_payload = {
+                "user_id":               f["user_id"],
+                "hour_of_day":           12,
+                "is_weekend":            0,
+                "is_new_ip":             min(f["ip_count"] - 1, 1),
+                "is_new_device":         min(f["device_count"] - 1, 1),
+                "failed_attempts":       f["failed_attempt"],
+                "keystroke_speed_ms":    150.0,
+                "keystroke_irregularity": 30.0,
+                "transaction_amount":    0.0,
+                "click_count_per_min":   30.0,
+                "session_velocity":      f["failed_attempt"] / max(f["time_window_min"] / 60, 0.1),
+                "ua_risk_score":         0.3,
+            }
+            ai_result = _engine.score_session(session_payload)
+            risk += ai_result.risk_numeric // 2  # blend AI score
+            if ai_result.is_anomaly:
+                reasons.extend(ai_result.explanation)
+        except Exception as exc:
+            logger.warning("audit_analyze: AI scoring failed — %s", exc)
+
+    # ── Rule: failed_attempt contributes to risk ──────────────────────────
+    if f["failed_attempt"] >= 5:
+        reasons.append(f"{f['failed_attempt']} lần sai mật khẩu")
+        risk += 25
+    elif f["failed_attempt"] >= 3:
+        reasons.append(f"{f['failed_attempt']} lần sai mật khẩu")
+        risk += 10
+
+    risk = min(100, risk)
+
+    if risk >= 70:
+        result, action = "attack",     "lock_account"
+    elif risk >= 40:
+        result, action = "suspicious", "send_email"
+    else:
+        result, action = "normal",     "none"
+
+    if not reasons:
+        reasons = ["Hành vi trong ngưỡng bình thường"]
+
+    return AuditAnalysisResponse(
+        result=result, risk_score=risk,
+        reasons=reasons, action=action, features=f,
+    )
+
+
 if __name__ == "__main__":
     uvicorn.run("app:app", host="127.0.0.1", port=5001, reload=False)
