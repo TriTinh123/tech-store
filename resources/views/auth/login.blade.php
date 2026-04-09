@@ -73,20 +73,21 @@
         .copy-note{text-align:center;font-size:11px;color:#cbd5e1;margin-top:28px;line-height:1.6}
         @media(max-width:768px){.auth-left{display:none}.auth-right{padding:32px 20px}}
         /* Demo Panel */
-        .demo-toggle{width:100%;margin-top:14px;padding:9px 13px;background:#fefce8;border:1.5px dashed #fbbf24;border-radius:10px;font-size:12px;font-weight:600;color:#92400e;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .2s;font-family:'Inter',sans-serif;}
-        .demo-toggle:hover{background:#fef9c3}
-        .demo-toggle .arrow{transition:transform .25s;font-size:11px}
+        .demo-toggle{width:100%;margin-top:14px;padding:9px 13px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:500;color:#64748b;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .2s;font-family:'Inter',sans-serif;gap:8px}
+        .demo-toggle:hover{background:#f1f5f9;color:#475569}
+        .demo-toggle .arrow{transition:transform .25s;font-size:10px;color:#94a3b8}
         .demo-toggle.open .arrow{transform:rotate(180deg)}
-        .demo-panel{background:#fffbeb;border:1.5px solid #fde68a;border-top:none;border-radius:0 0 10px 10px;padding:13px 14px;margin-top:-4px;display:none;}
+        .demo-toggle-left{display:flex;align-items:center;gap:7px}
+        .demo-panel{background:#fff;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;padding:12px 13px;margin-top:-2px;display:none;}
         .demo-panel.open{display:block}
-        .demo-select-wrap{position:relative;margin-bottom:10px}
-        .demo-select-wrap select{width:100%;padding:9px 34px 9px 12px;border:1.5px solid #fde68a;border-radius:8px;font-size:13px;font-weight:500;color:#1e293b;background:#fff;font-family:'Inter',sans-serif;appearance:none;cursor:pointer;outline:none;transition:border-color .2s}
-        .demo-select-wrap select:focus{border-color:#f59e0b}
-        .demo-select-wrap::after{content:'\25BC';position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:#94a3b8;pointer-events:none}
-        .demo-prediction{padding:9px 12px;border-radius:8px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px}
-        .pred-normal{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
-        .pred-otp{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
-        .pred-attack{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5}
+        .demo-select-wrap{position:relative;margin-bottom:9px}
+        .demo-select-wrap select{width:100%;padding:8px 32px 8px 11px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;font-weight:400;color:#1e293b;background:#f8fafc;font-family:'Inter',sans-serif;appearance:none;cursor:pointer;outline:none;transition:border-color .2s}
+        .demo-select-wrap select:focus{border-color:#6366f1;background:#fff}
+        .demo-select-wrap::after{content:'\25BC';position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:9px;color:#94a3b8;pointer-events:none}
+        .demo-prediction{padding:8px 11px;border-radius:7px;font-size:11.5px;font-weight:500;display:flex;align-items:center;gap:7px}
+        .pred-normal{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+        .pred-otp{background:#fff7ed;color:#9a3412;border:1px solid #fed7aa}
+        .pred-attack{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
     </style>
 </head>
 <body>
@@ -172,18 +173,18 @@
                 <input type="hidden" name="demo_ip_count" id="demo_ip_count" value="0">
 
                 <button type="button" class="demo-toggle" id="demoToggleBtn" onclick="toggleDemo()">
-                    <span>🎭 Demo Mode — Giả lập tấn công / bất thường</span>
+                    <span class="demo-toggle-left"><i class="fas fa-shield-halved" style="color:#94a3b8;font-size:12px"></i> Security scenario</span>
                     <i class="fas fa-chevron-down arrow"></i>
                 </button>
                 <div class="demo-panel" id="demoPanel">
                     <div class="demo-select-wrap">
                         <select id="demoSelect" onchange="selectScenario(this.value)">
-                            <option value="normal">✅ Bình thường — Đăng nhập thẳng</option>
-                            <option value="foreign">🇺🇸 IP từ Mỹ (New York) + thiết bị lạ</option>
-                            <option value="night">🌙 Đăng nhập lúc 3 giờ sáng + IP lạ</option>
-                            <option value="device">📱 Đổi thiết bị đột ngột (PC → iPhone)</option>
-                            <option value="vpn">🇷🇺 IP từ Nga / VPN + geo thay đổi</option>
-                            <option value="brute">💀 Brute-force: 12 lần sai · 5 IP khác nhau</option>
+                            <option value="normal">Trusted device — Vietnam, business hours</option>
+                            <option value="foreign">Unknown location — New York, US (104.18.x.x)</option>
+                            <option value="night">Unusual time — 3:12 AM, unrecognized device</option>
+                            <option value="device">New device — Windows PC switched to iPhone 16</option>
+                            <option value="vpn">High-risk region — Moscow, RU / VPN detected</option>
+                            <option value="brute">Brute-force attack — 12 failed attempts, 5 IPs</option>
                         </select>
                     </div>
                     <div style="display:none">
@@ -221,17 +222,17 @@
     // ── Demo Mode ─────────────────────────────────────────────────────────
     const SCENARIOS = {
         normal:  { failed:0,  new_ip:'0', new_device:'0', geo:'0', ip_count:0, level:'normal',
-                   pred:'<strong>✅ Bình thường</strong> — AI cho đăng nhập thẳng, không cần OTP' },
+                   pred:'<i class="fas fa-check-circle"></i> <span>Trusted context detected — signing in directly. No additional verification required.</span>' },
         foreign: { failed:0,  new_ip:'1', new_device:'1', geo:'1', ip_count:0, level:'otp',
-                   pred:'<strong>⚠️ IP Mỹ + thiết bị lạ</strong> — Hệ thống gửi OTP (F2) → AI đánh giá F3' },
+                   pred:'<i class="fas fa-triangle-exclamation"></i> <span>Sign-in from unknown location (US). Sending verification code to your email (Factor 2).</span>' },
         night:   { failed:3,  new_ip:'1', new_device:'1', geo:'0', ip_count:0, level:'otp',
-                   pred:'<strong>⚠️ Đăng nhập 3 giờ sáng + IP lạ</strong> — Bị yêu cầu OTP (F2)' },
+                   pred:'<i class="fas fa-triangle-exclamation"></i> <span>Unusual sign-in time (3 AM) with unrecognized device. Email verification required.</span>' },
         device:  { failed:0,  new_ip:'1', new_device:'1', geo:'0', ip_count:0, level:'otp',
-                   pred:'<strong>⚠️ Đổi thiết bị đột ngột</strong> — IP lạ + device lạ → yêu cầu OTP (F2)' },
+                   pred:'<i class="fas fa-triangle-exclamation"></i> <span>New device and IP address detected. Please verify your identity via email OTP.</span>' },
         vpn:     { failed:2,  new_ip:'1', new_device:'1', geo:'1', ip_count:3, level:'otp',
-                   pred:'<strong>🚨 IP Nga / VPN + geo đột ngột</strong> — OTP bắt buộc → chuyển lên F3' },
+                   pred:'<i class="fas fa-shield-halved"></i> <span>High-risk region &amp; VPN detected. Multi-factor verification required (Factor 2 → Factor 3).</span>' },
         brute:   { failed:12, new_ip:'0', new_device:'0', geo:'0', ip_count:5, level:'attack',
-                   pred:'<strong>🚨 Brute-force phát hiện</strong> — AI khoá tài khoản ngay lập tức' },
+                   pred:'<i class="fas fa-ban"></i> <span>Brute-force attack detected. Account has been locked and security alert sent.</span>' },
     };
     function toggleDemo(){
         const btn=document.getElementById('demoToggleBtn');
