@@ -73,31 +73,17 @@
         .copy-note{text-align:center;font-size:11px;color:#cbd5e1;margin-top:28px;line-height:1.6}
         @media(max-width:768px){.auth-left{display:none}.auth-right{padding:32px 20px}}
         /* Demo Panel */
-        .demo-toggle{width:100%;margin-top:14px;padding:10px 14px;background:#fefce8;border:1.5px dashed #fbbf24;border-radius:10px;font-size:12.5px;font-weight:600;color:#92400e;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .2s;font-family:'Inter',sans-serif;}
-        .demo-toggle:hover{background:#fef9c3;border-color:#f59e0b}
-        .demo-toggle .arrow{transition:transform .25s}
+        .demo-toggle{width:100%;margin-top:14px;padding:9px 13px;background:#fefce8;border:1.5px dashed #fbbf24;border-radius:10px;font-size:12px;font-weight:600;color:#92400e;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .2s;font-family:'Inter',sans-serif;}
+        .demo-toggle:hover{background:#fef9c3}
+        .demo-toggle .arrow{transition:transform .25s;font-size:11px}
         .demo-toggle.open .arrow{transform:rotate(180deg)}
-        .demo-panel{background:#fffbeb;border:1.5px solid #fde68a;border-top:none;border-radius:0 0 10px 10px;padding:16px;margin-top:-6px;display:none;}
+        .demo-panel{background:#fffbeb;border:1.5px solid #fde68a;border-top:none;border-radius:0 0 10px 10px;padding:13px 14px;margin-top:-4px;display:none;}
         .demo-panel.open{display:block}
-        .demo-panel-title{font-size:11px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-        .demo-badge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:700}
-        .badge-red{background:#fee2e2;color:#dc2626}
-        .badge-yellow{background:#fef9c3;color:#b45309}
-        .badge-blue{background:#dbeafe;color:#1d4ed8}
-        .badge-green{background:#dcfce7;color:#15803d}
-        /* Scenario cards */
-        .scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-        .scenario-card{border:2px solid #e5e7eb;border-radius:10px;padding:10px 11px;cursor:pointer;background:#fff;transition:all .18s;position:relative;text-align:left;font-family:'Inter',sans-serif;}
-        .scenario-card:hover{border-color:#f59e0b;background:#fef9c3}
-        .scenario-card.selected{border-color:#f59e0b;background:#fef9c3;box-shadow:0 0 0 3px rgba(245,158,11,.2)}
-        .scenario-card.selected-red{border-color:#ef4444;background:#fef2f2;box-shadow:0 0 0 3px rgba(239,68,68,.15)}
-        .scenario-card.reset-card{border-color:#e2e8f0;background:#f8fafc;}
-        .scenario-card.reset-card:hover{border-color:#94a3b8;background:#f1f5f9}
-        .sc-icon{font-size:20px;margin-bottom:5px;display:block}
-        .sc-title{font-size:12px;font-weight:700;color:#1e293b;margin-bottom:2px;line-height:1.3}
-        .sc-desc{font-size:10.5px;color:#64748b;line-height:1.4}
-        .sc-badge{position:absolute;top:7px;right:7px}
-        .demo-prediction{padding:10px 12px;border-radius:8px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;margin-top:4px}
+        .demo-select-wrap{position:relative;margin-bottom:10px}
+        .demo-select-wrap select{width:100%;padding:9px 34px 9px 12px;border:1.5px solid #fde68a;border-radius:8px;font-size:13px;font-weight:500;color:#1e293b;background:#fff;font-family:'Inter',sans-serif;appearance:none;cursor:pointer;outline:none;transition:border-color .2s}
+        .demo-select-wrap select:focus{border-color:#f59e0b}
+        .demo-select-wrap::after{content:'\25BC';position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:#94a3b8;pointer-events:none}
+        .demo-prediction{padding:9px 12px;border-radius:8px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px}
         .pred-normal{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
         .pred-otp{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
         .pred-attack{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5}
@@ -190,51 +176,17 @@
                     <i class="fas fa-chevron-down arrow"></i>
                 </button>
                 <div class="demo-panel" id="demoPanel">
-                    <div class="demo-panel-title"><i class="fas fa-flask"></i> Chọn kịch bản giả lập</div>
-
-                    <div class="scenario-grid">
-                        <!-- Scenario 1: Normal -->
-                        <button type="button" class="scenario-card reset-card selected" id="sc_normal" onclick="selectScenario('normal')">
-                            <span class="sc-icon">✅</span>
-                            <div class="sc-title">Đăng nhập bình thường</div>
-                            <div class="sc-desc">Việt Nam · Thiết bị quen · Giờ hành chính</div>
-                            <span class="sc-badge"><span class="demo-badge badge-green">Normal</span></span>
-                        </button>
-                        <!-- Scenario 2: Foreign IP -->
-                        <button type="button" class="scenario-card" id="sc_foreign" onclick="selectScenario('foreign')">
-                            <span class="sc-icon">🇺🇸</span>
-                            <div class="sc-title">IP từ Mỹ</div>
-                            <div class="sc-desc">IP: 104.18.x.x · New York · Thiết bị lạ</div>
-                            <span class="sc-badge"><span class="demo-badge badge-yellow">OTP</span></span>
-                        </button>
-                        <!-- Scenario 3: Night login -->
-                        <button type="button" class="scenario-card" id="sc_night" onclick="selectScenario('night')">
-                            <span class="sc-icon">🌙</span>
-                            <div class="sc-title">Đăng nhập lúc 3 giờ sáng</div>
-                            <div class="sc-desc">IP lạ · 03:12 AM · Thiết bị chưa biết</div>
-                            <span class="sc-badge"><span class="demo-badge badge-yellow">OTP</span></span>
-                        </button>
-                        <!-- Scenario 4: Brute force -->
-                        <button type="button" class="scenario-card" id="sc_brute" onclick="selectScenario('brute')">
-                            <span class="sc-icon">💀</span>
-                            <div class="sc-title">Brute-force tấn công</div>
-                            <div class="sc-desc">12 lần sai trong 10 phút · 5 IP khác nhau</div>
-                            <span class="sc-badge"><span class="demo-badge badge-red">LOCK</span></span>
-                        </button>
-                        <!-- Scenario 5: Russia/China VPN -->
-                        <button type="button" class="scenario-card" id="sc_vpn" onclick="selectScenario('vpn')">
-                            <span class="sc-icon">🇷🇺</span>
-                            <div class="sc-title">IP từ Nga / VPN</div>
-                            <div class="sc-desc">IP: 195.82.x.x · Moscow · Geo thay đổi đột ngột</div>
-                            <span class="sc-badge"><span class="demo-badge badge-red">OTP+F3</span></span>
-                        </button>
-                        <!-- Scenario 6: Device switch -->
-                        <button type="button" class="scenario-card" id="sc_device" onclick="selectScenario('device')">
-                            <span class="sc-icon">📱</span>
-                            <div class="sc-title">Đổi thiết bị đột ngột</div>
-                            <div class="sc-desc">PC Windows → iPhone 16 · IP khác · Cùng email</div>
-                            <span class="sc-badge"><span class="demo-badge badge-yellow">OTP</span></span>
-                        </button>
+                    <div class="demo-select-wrap">
+                        <select id="demoSelect" onchange="selectScenario(this.value)">
+                            <option value="normal">✅ Bình thường — Đăng nhập thẳng</option>
+                            <option value="foreign">🇺🇸 IP từ Mỹ (New York) + thiết bị lạ</option>
+                            <option value="night">🌙 Đăng nhập lúc 3 giờ sáng + IP lạ</option>
+                            <option value="device">📱 Đổi thiết bị đột ngột (PC → iPhone)</option>
+                            <option value="vpn">🇷🇺 IP từ Nga / VPN + geo thay đổi</option>
+                            <option value="brute">💀 Brute-force: 12 lần sai · 5 IP khác nhau</option>
+                        </select>
+                    </div>
+                    <div style="display:none">
                     </div>
 
                     <div class="demo-prediction pred-normal" id="demoPred">
@@ -267,7 +219,6 @@
     })();
     (function(){let cl=0;const t0=performance.now();document.addEventListener('click',function(){cl++;});const f=document.querySelector('form.login-form');f.addEventListener('submit',function(){const m=Math.max((performance.now()-t0)/60000,1/60);setHiddenField(f,'click_count_per_min',Math.round(cl/m));});})();
     // ── Demo Mode ─────────────────────────────────────────────────────────
-    // Scenario definitions
     const SCENARIOS = {
         normal:  { failed:0,  new_ip:'0', new_device:'0', geo:'0', ip_count:0, level:'normal',
                    pred:'<strong>✅ Bình thường</strong> — AI cho đăng nhập thẳng, không cần OTP' },
@@ -275,44 +226,36 @@
                    pred:'<strong>⚠️ IP Mỹ + thiết bị lạ</strong> — Hệ thống gửi OTP (F2) → AI đánh giá F3' },
         night:   { failed:3,  new_ip:'1', new_device:'1', geo:'0', ip_count:0, level:'otp',
                    pred:'<strong>⚠️ Đăng nhập 3 giờ sáng + IP lạ</strong> — Bị yêu cầu OTP (F2)' },
-        brute:   { failed:12, new_ip:'0', new_device:'0', geo:'0', ip_count:5, level:'attack',
-                   pred:'<strong>🚨 Brute-force phát hiện</strong> — AI khoá tài khoản ngay lập tức' },
-        vpn:     { failed:2,  new_ip:'1', new_device:'1', geo:'1', ip_count:3, level:'otp',
-                   pred:'<strong>🚨 IP Nga / VPN + geo đột ngột</strong> — OTP bắt buộc → chuyển lên F3' },
         device:  { failed:0,  new_ip:'1', new_device:'1', geo:'0', ip_count:0, level:'otp',
                    pred:'<strong>⚠️ Đổi thiết bị đột ngột</strong> — IP lạ + device lạ → yêu cầu OTP (F2)' },
+        vpn:     { failed:2,  new_ip:'1', new_device:'1', geo:'1', ip_count:3, level:'otp',
+                   pred:'<strong>🚨 IP Nga / VPN + geo đột ngột</strong> — OTP bắt buộc → chuyển lên F3' },
+        brute:   { failed:12, new_ip:'0', new_device:'0', geo:'0', ip_count:5, level:'attack',
+                   pred:'<strong>🚨 Brute-force phát hiện</strong> — AI khoá tài khoản ngay lập tức' },
     };
     function toggleDemo(){
         const btn=document.getElementById('demoToggleBtn');
         const panel=document.getElementById('demoPanel');
         btn.classList.toggle('open');
         panel.classList.toggle('open');
-        const on=panel.classList.contains('open');
-        if(!on){ document.getElementById('demo_mode').value='0'; }
+        if(panel.classList.contains('open')) selectScenario('normal');
+        else document.getElementById('demo_mode').value='0';
     }
     function selectScenario(key){
         const s=SCENARIOS[key];
         if(!s) return;
-        // Remove selected from all cards
-        document.querySelectorAll('.scenario-card').forEach(c=>{
-            c.classList.remove('selected','selected-red');
-        });
-        const card=document.getElementById('sc_'+key);
-        if(card) card.classList.add(s.level==='attack'?'selected-red':'selected');
-        // Set hidden fields
         document.getElementById('demo_mode').value= key==='normal'?'0':'1';
         document.getElementById('demo_failed_attempts').value=s.failed;
         document.getElementById('demo_new_ip').value=s.new_ip;
         document.getElementById('demo_new_device').value=s.new_device;
         document.getElementById('demo_geo_changed').value=s.geo;
         document.getElementById('demo_ip_count').value=s.ip_count;
-        // Update prediction badge
         const pred=document.getElementById('demoPred');
         const txt=document.getElementById('demoPredText');
         pred.className='demo-prediction';
-        if(s.level==='attack'){ pred.classList.add('pred-attack'); }
-        else if(s.level==='otp'){ pred.classList.add('pred-otp'); }
-        else { pred.classList.add('pred-normal'); }
+        if(s.level==='attack') pred.classList.add('pred-attack');
+        else if(s.level==='otp') pred.classList.add('pred-otp');
+        else pred.classList.add('pred-normal');
         txt.innerHTML=s.pred;
     }
 </script>
