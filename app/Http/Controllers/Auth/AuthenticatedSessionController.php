@@ -19,10 +19,10 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Adaptive 3FA login (đúng spec giảng viên):
-     *   - Sai mật khẩu  → ghi audit log → AI check brute-force
-     *   - Đúng mật khẩu → OTP (F2) luôn luôn
-     *   - Sau OTP: AI check → LOW/MEDIUM → vào thẳng | HIGH/CRITICAL → Factor 3
+     * Adaptive Authentication (như Google/GitHub):
+     *   - Sai mật khẩu       → ghi audit log → AI check brute-force
+     *   - Đúng + bình thường → login thẳng (không OTP)
+     *   - Đúng + nghi ngờ    → OTP (F2) → AI → Factor 3 nếu HIGH
      */
     public function store(Request $request)
     {
@@ -43,7 +43,6 @@ class AuthenticatedSessionController extends Controller
                 'password_ok'=> false,
             ]);
 
-            // Ghi audit log + AI check brute-force
             app(AuditLogService::class)->record($request, $user, false);
 
             throw ValidationException::withMessages([
@@ -57,7 +56,32 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
-        // ── Đúng mật khẩu → luôn gửi OTP (Factor 2) ─────────────────────
+        // ── Đúng mật khẩu: AI kiểm tra hành vi ───────────────────────────
+        $suspicious = app(AuditLogService::class)->isSuspicious($request, $user);
+
+        if (! $suspicious) {
+            // ✅ Bình thường → login thẳng (như Google trên thiết bị quen)
+            LoginAttempt::create([
+                'user_id'     => $user->id,
+                'email'       => $user->email,
+                'ip_address'  => $request->ip(),
+                'user_agent'  => $request->userAgent(),
+                'password_ok' => true,
+                'otp_ok'      => true,
+                'success'     => true,
+                'risk_level'  => 'low',
+                'risk_numeric'=> 0,
+            ]);
+
+            Auth::login($user, $request->filled('remember'));
+            $request->session()->regenerate();
+
+            return redirect()->intended(
+                $user->is_admin ? route('admin') : route('home')
+            );
+        }
+
+        // ⚠️ Nghi ngờ → gửi OTP (F2), sau đó AI quyết định có cần F3 không
         $triedAdmin = session('auth.tried_admin', false);
         session([
             'auth.pending_user_id'        => $user->id,
@@ -76,7 +100,7 @@ class AuthenticatedSessionController extends Controller
         app(OtpService::class)->send($user);
 
         return redirect()->route('auth.otp')->with(
-            'info', "An OTP code has been sent to {$user->email}"
+            'warning', "⚠️ Suspicious activity detected. Please verify with OTP sent to {$user->email}"
         );
     }
 
