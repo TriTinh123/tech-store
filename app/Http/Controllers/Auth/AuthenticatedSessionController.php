@@ -19,10 +19,10 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Adaptive Authentication (như Google/GitHub):
-     *   - Sai mật khẩu       → ghi audit log → AI check brute-force
-     *   - Đúng + bình thường → login thẳng (không OTP)
-     *   - Đúng + nghi ngờ    → OTP (F2) → AI → Factor 3 nếu HIGH
+     * Adaptive Authentication (similar to Google/GitHub):
+     *   - Wrong password     → write audit log → AI brute-force check
+     *   - Correct + normal   → direct login (no OTP)
+     *   - Correct + suspicious → OTP (F2) → AI → Factor 3 if HIGH
      */
     public function store(Request $request)
     {
@@ -58,24 +58,24 @@ class AuthenticatedSessionController extends Controller
 
         // ── Đúng mật khẩu: AI kiểm tra hành vi ───────────────────────────
 
-        // Demo attack: ≥10 fail → khóa tài khoản ngay lập tức (tác động thật)
+        // Demo attack: ≥10 fails → lock account immediately (real effect)
         if ($request->input('demo_mode') === '1' && (int) $request->input('demo_failed_attempts', 0) >= 10) {
             $user->update(['is_blocked' => true]);
             try {
                 \Illuminate\Support\Facades\Mail::raw(
-                    "[🚨 TẤN CÔNG PHÁT HIỆN]\n\nAI phát hiện tấn công brute-force (demo). Tài khoản đã bị khóa.\nRisk score: 100",
-                    fn($m) => $m->to($user->email)->subject('🚨 Tài khoản bị khoá — AI phát hiện tấn công')
+                    "[🚨 ATTACK DETECTED]\n\nAI detected a brute-force attack (demo). Account has been locked.\nRisk score: 100",
+                    fn($m) => $m->to($user->email)->subject('🚨 Account Locked — AI Detected Attack')
                 );
             } catch (\Throwable) {}
             throw ValidationException::withMessages([
-                'email' => '🚨 [DEMO] AI phát hiện tấn công brute-force — tài khoản đã bị khóa.',
+                'email' => '🚨 [DEMO] AI detected brute-force attack — account has been locked.',
             ]);
         }
 
         $suspicious = app(AuditLogService::class)->isSuspicious($request, $user);
 
         if (! $suspicious) {
-            // ✅ Bình thường → login thẳng (như Google trên thiết bị quen)
+            // ✅ Normal → direct login (trusted device, like Google)
             LoginAttempt::create([
                 'user_id'     => $user->id,
                 'email'       => $user->email,
@@ -96,7 +96,7 @@ class AuthenticatedSessionController extends Controller
             );
         }
 
-        // ⚠️ Nghi ngờ → gửi OTP (F2), sau đó AI quyết định có cần F3 không
+        // ⚠️ Suspicious → send OTP (F2), then AI decides if F3 is needed
         $triedAdmin = session('auth.tried_admin', false);
         session([
             'auth.pending_user_id'        => $user->id,
@@ -110,7 +110,7 @@ class AuthenticatedSessionController extends Controller
             'auth.screen_h'               => $request->input('screen_h', 1080),
             'auth.timezone'               => $request->input('timezone', 'Asia/Ho_Chi_Minh'),
             'auth.tried_admin'            => $triedAdmin,
-            // Demo mode — lưu để OtpController đọc lại
+            // Demo mode — save to session so OtpController can read back
             'auth.demo_mode'              => $request->input('demo_mode', '0'),
             'auth.demo_failed_attempts'   => (int) $request->input('demo_failed_attempts', 0),
             'auth.demo_new_ip'            => $request->input('demo_new_ip', '0'),

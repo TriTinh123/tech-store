@@ -76,11 +76,11 @@
   <div style="padding:20px 24px;background:#f8fafc">
     <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap;justify-content:center">
       @foreach([
-        ['icon'=>'fa-user','label'=>'Users','sub'=>'Enter Username / Password','color'=>'#0984e3'],
-        ['icon'=>'fa-arrow-right','label'=>'','sub'=>'','color'=>'#b2bec3','arrow'=>true],
-        ['icon'=>'fa-envelope','label'=>'Factor 2','sub'=>'OTP qua Email','color'=>'#6c5ce7'],
+        ['icon'=>'fa-user','label'=>'Factor 1','sub'=>'Username / Password','color'=>'#0984e3'],
         ['icon'=>'fa-arrow-right','label'=>'','sub'=>'','color'=>'#b2bec3','arrow'=>true],
         ['icon'=>'fa-brain','label'=>'AI Engine','sub'=>'Isolation Forest\nRisk Score','color'=>'#e84040'],
+        ['icon'=>'fa-arrow-right','label'=>'','sub'=>'','color'=>'#b2bec3','arrow'=>true],
+        ['icon'=>'fa-envelope','label'=>'Factor 2','sub'=>'OTP via Email\n(if suspicious)','color'=>'#6c5ce7'],
         ['icon'=>'fa-arrow-right','label'=>'','sub'=>'','color'=>'#b2bec3','arrow'=>true],
         ['icon'=>'fa-check-double','label'=>'Factor 3','sub'=>'Security Question / Biometric\n(if HIGH/CRITICAL)','color'=>'#f39c12'],
         ['icon'=>'fa-arrow-right','label'=>'','sub'=>'','color'=>'#b2bec3','arrow'=>true],

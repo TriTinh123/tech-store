@@ -382,10 +382,10 @@ class DemoScenario(BaseModel):
 
 DEMO_SCENARIOS = {
     "normal": DemoScenario(
-        label="Kịch bản A — Người dùng hợp lệ",
+        label="Scenario A — Legitimate User",
         description=(
-            "Đăng nhập lúc 10:00 sáng thứ Hai, IP quen thuộc (Việt Nam), "
-            "thiết bị cũ, gõ phím tự nhiên, giỏ hàng trị giá 800,000 VND."
+            "Login at 10:00 AM Monday, familiar IP (Vietnam), "
+            "known device, natural typing, cart value 800,000 VND."
         ),
         session={
             "user_id": 1,
@@ -401,11 +401,11 @@ DEMO_SCENARIOS = {
         },
     ),
     "anomaly": DemoScenario(
-        label="Kịch bản B — Kẻ tấn công / Bất thường",
+        label="Scenario B — Attacker / Anomaly",
         description=(
-            "Đăng nhập lúc 3:00 sáng, IP nước ngoài (chưa từng thấy), "
-            "thiết bị mới, tốc độ gõ phím bất thường nhanh (Bot), "
-            "giỏ hàng đột biến 15,000,000 VND."
+            "Login at 3:00 AM, foreign IP (never seen before), "
+            "new device, abnormally fast typing (Bot), "
+            "cart spike to 15,000,000 VND."
         ),
         session={
             "user_id": 1,
