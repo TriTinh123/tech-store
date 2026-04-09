@@ -19,7 +19,10 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Step 1 of 3FA: Verify password, then send OTP (Factor 2).
+     * Login flow (Adaptive):
+     *   - Sai mật khẩu → ghi audit log → AI check nếu cần
+     *   - Đúng mật khẩu + KHÔNG nghi ngờ → đăng nhập thẳng
+     *   - Đúng mật khẩu + CÓ nghi ngờ   → gửi OTP (Factor 2)
      */
     public function store(Request $request)
     {
@@ -28,12 +31,10 @@ class AuthenticatedSessionController extends Controller
             'password' => 'required|string',
         ]);
 
-        // Find user first so we can record the attempt
         $user = User::where('email', $credentials['email'])->first();
 
-        // ── Sanity checks ──────────────────────────────────────────────────
+        // ── Sai mật khẩu ──────────────────────────────────────────────────
         if (! $user || ! Auth::validate($credentials)) {
-            // Record failed password attempt
             LoginAttempt::create([
                 'user_id'    => $user?->id,
                 'email'      => $credentials['email'],
@@ -42,7 +43,7 @@ class AuthenticatedSessionController extends Controller
                 'password_ok'=> false,
             ]);
 
-            // ── Audit log ghi hành vi sai mật khẩu + gọi AI nếu cần ───────
+            // Ghi audit log + AI check brute-force
             app(AuditLogService::class)->record($request, $user, false);
 
             throw ValidationException::withMessages([
@@ -56,29 +57,52 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
-        // ── Store pending session data for OTP + AI stages ─────────────────
-        // Preserve auth.tried_admin flag set by AdminMiddleware (if any)
+        // ── Đúng mật khẩu: kiểm tra có nghi ngờ không ────────────────────
+        $auditService = app(AuditLogService::class);
+        $suspicious   = $auditService->isSuspicious($request, $user);
+
+        if (! $suspicious) {
+            // ✅ Bình thường → đăng nhập thẳng, không cần OTP
+            LoginAttempt::create([
+                'user_id'    => $user->id,
+                'email'      => $user->email,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'password_ok'=> true,
+                'otp_ok'     => true,
+                'success'    => true,
+                'risk_level' => 'low',
+                'risk_numeric' => 0,
+            ]);
+
+            Auth::login($user, $request->filled('remember'));
+            $request->session()->regenerate();
+
+            return redirect()->intended(
+                $user->is_admin ? route('admin.dashboard') : route('home')
+            );
+        }
+
+        // ⚠️ Có dấu hiệu nghi ngờ → gửi OTP (Factor 2)
         $triedAdmin = session('auth.tried_admin', false);
         session([
-            'auth.pending_user_id'         => $user->id,
-            'auth.remember'                => $request->filled('remember'),
-            // Keystroke fingerprint collected by JS in the login form
-            'auth.keystroke_speed_ms'      => (float) $request->input('keystroke_speed_ms', 150),
-            'auth.keystroke_irregularity'  => (float) $request->input('keystroke_irregularity', 30),
-            'auth.click_count_per_min'     => (int)   $request->input('click_count_per_min', 30),
-            'auth.mouse_move_count'        => (int)   $request->input('mouse_move_count', 0),
-            'auth.mouse_avg_speed'         => (float) $request->input('mouse_avg_speed', 0),
-            'auth.screen_w'                => $request->input('screen_w', 1920),
-            'auth.screen_h'                => $request->input('screen_h', 1080),
-            'auth.timezone'                => $request->input('timezone', 'Asia/Ho_Chi_Minh'),
-            'auth.tried_admin'             => $triedAdmin,
+            'auth.pending_user_id'        => $user->id,
+            'auth.remember'               => $request->filled('remember'),
+            'auth.keystroke_speed_ms'     => (float) $request->input('keystroke_speed_ms', 150),
+            'auth.keystroke_irregularity' => (float) $request->input('keystroke_irregularity', 30),
+            'auth.click_count_per_min'    => (int)   $request->input('click_count_per_min', 30),
+            'auth.mouse_move_count'       => (int)   $request->input('mouse_move_count', 0),
+            'auth.mouse_avg_speed'        => (float) $request->input('mouse_avg_speed', 0),
+            'auth.screen_w'               => $request->input('screen_w', 1920),
+            'auth.screen_h'               => $request->input('screen_h', 1080),
+            'auth.timezone'               => $request->input('timezone', 'Asia/Ho_Chi_Minh'),
+            'auth.tried_admin'            => $triedAdmin,
         ]);
 
-        // ── Send OTP email (Factor 2) ─────────────────────────────────────
         app(OtpService::class)->send($user);
 
         return redirect()->route('auth.otp')->with(
-            'info', "An OTP code has been sent to {$user->email}"
+            'warning', "⚠️ Suspicious activity detected. An OTP code has been sent to {$user->email}"
         );
     }
 

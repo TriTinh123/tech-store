@@ -29,6 +29,35 @@ class AuditLogService
     private const FAIL_SUSPECT = 3;  // ≥3 fail/window → đưa vào AI
 
     /**
+     * Kiểm tra nhanh xem login hiện tại có dấu hiệu nghi ngờ không.
+     * Dùng để quyết định có cần OTP hay không.
+     * Không ghi DB, chỉ đọc.
+     */
+    public function isSuspicious(Request $request, User $user): bool
+    {
+        $win = now()->subMinutes(self::TIME_WINDOW);
+
+        $base = LoginAttempt::where('user_id', $user->id)
+            ->where('created_at', '>=', $win);
+
+        $failedCount = (clone $base)->where('password_ok', false)->count();
+        $ipCount     = (clone $base)->distinct('ip_address')->count('ip_address');
+        $deviceCount = (clone $base)->distinct('user_agent')->count('user_agent');
+
+        // Thiết bị hoặc IP hiện tại có lạ không?
+        $knownIps     = $user->known_ips     ?? [];
+        $knownDevices = $user->known_devices ?? [];
+        $fp           = $this->deviceFingerprint($request);
+        $isNewIp      = ! in_array($request->ip(), $knownIps);
+        $isNewDevice  = ! in_array($fp, $knownDevices);
+
+        return $failedCount >= self::FAIL_SUSPECT
+            || $ipCount > 2
+            || $deviceCount > 2
+            || ($isNewIp && $isNewDevice);  // thiết bị lạ + IP lạ cùng lúc
+    }
+
+    /**
      * Ghi một lần thử đăng nhập vào audit_logs, sau đó quyết định có cần AI không.
      */
     public function record(Request $request, ?User $user, bool $passwordOk): AuditLog
