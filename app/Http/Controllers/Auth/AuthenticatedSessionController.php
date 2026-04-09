@@ -19,10 +19,10 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Login flow (Adaptive):
-     *   - Sai mật khẩu → ghi audit log → AI check nếu cần
-     *   - Đúng mật khẩu + KHÔNG nghi ngờ → đăng nhập thẳng
-     *   - Đúng mật khẩu + CÓ nghi ngờ   → gửi OTP (Factor 2)
+     * Adaptive 3FA login (đúng spec giảng viên):
+     *   - Sai mật khẩu  → ghi audit log → AI check brute-force
+     *   - Đúng mật khẩu → OTP (F2) luôn luôn
+     *   - Sau OTP: AI check → LOW/MEDIUM → vào thẳng | HIGH/CRITICAL → Factor 3
      */
     public function store(Request $request)
     {
@@ -57,33 +57,7 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
-        // ── Đúng mật khẩu: kiểm tra có nghi ngờ không ────────────────────
-        $auditService = app(AuditLogService::class);
-        $suspicious   = $auditService->isSuspicious($request, $user);
-
-        if (! $suspicious) {
-            // ✅ Bình thường → đăng nhập thẳng, không cần OTP
-            LoginAttempt::create([
-                'user_id'    => $user->id,
-                'email'      => $user->email,
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'password_ok'=> true,
-                'otp_ok'     => true,
-                'success'    => true,
-                'risk_level' => 'low',
-                'risk_numeric' => 0,
-            ]);
-
-            Auth::login($user, $request->filled('remember'));
-            $request->session()->regenerate();
-
-            return redirect()->intended(
-                $user->is_admin ? route('admin.dashboard') : route('home')
-            );
-        }
-
-        // ⚠️ Có dấu hiệu nghi ngờ → gửi OTP (Factor 2)
+        // ── Đúng mật khẩu → luôn gửi OTP (Factor 2) ─────────────────────
         $triedAdmin = session('auth.tried_admin', false);
         session([
             'auth.pending_user_id'        => $user->id,
@@ -102,7 +76,7 @@ class AuthenticatedSessionController extends Controller
         app(OtpService::class)->send($user);
 
         return redirect()->route('auth.otp')->with(
-            'warning', "⚠️ Suspicious activity detected. An OTP code has been sent to {$user->email}"
+            'info', "An OTP code has been sent to {$user->email}"
         );
     }
 
