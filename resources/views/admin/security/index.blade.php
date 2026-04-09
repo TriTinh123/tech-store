@@ -154,13 +154,20 @@
                         @endif
                     </td>
                     <td style="max-width:220px">
-                        @if($a->explanation && count($a->explanation))
+                        @php
+                            $explanations = is_array($a->explanation)
+                                ? $a->explanation
+                                : (is_string($a->explanation) && str_starts_with(trim($a->explanation), '[')
+                                    ? (json_decode($a->explanation, true) ?? [$a->explanation])
+                                    : ($a->explanation ? [$a->explanation] : []));
+                        @endphp
+                        @if(count($explanations))
                             <ul style="list-style:none;padding:0;margin:0">
-                                @foreach(array_slice($a->explanation, 0, 2) as $reason)
+                                @foreach(array_slice($explanations, 0, 2) as $reason)
                                     <li style="font-size:11.5px;color:var(--muted);line-height:1.5">• {{ $reason }}</li>
                                 @endforeach
-                                @if(count($a->explanation) > 2)
-                                    <li style="font-size:11px;color:var(--muted);opacity:.7">+{{ count($a->explanation) - 2 }} more…</li>
+                                @if(count($explanations) > 2)
+                                    <li style="font-size:11px;color:var(--muted);opacity:.7">+{{ count($explanations) - 2 }} more…</li>
                                 @endif
                             </ul>
                         @else <span style="color:var(--muted);font-size:12px">—</span> @endif
