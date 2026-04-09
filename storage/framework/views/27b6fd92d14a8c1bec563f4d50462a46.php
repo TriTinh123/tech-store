@@ -156,13 +156,20 @@
                         <?php endif; ?>
                     </td>
                     <td style="max-width:220px">
-                        <?php if($a->explanation && count($a->explanation)): ?>
+                        <?php
+                            $explanations = is_array($a->explanation)
+                                ? $a->explanation
+                                : (is_string($a->explanation) && str_starts_with(trim($a->explanation), '[')
+                                    ? (json_decode($a->explanation, true) ?? [$a->explanation])
+                                    : ($a->explanation ? [$a->explanation] : []));
+                        ?>
+                        <?php if(count($explanations)): ?>
                             <ul style="list-style:none;padding:0;margin:0">
-                                <?php $__currentLoopData = array_slice($a->explanation, 0, 2); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $reason): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php $__currentLoopData = array_slice($explanations, 0, 2); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $reason): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <li style="font-size:11.5px;color:var(--muted);line-height:1.5">• <?php echo e($reason); ?></li>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                <?php if(count($a->explanation) > 2): ?>
-                                    <li style="font-size:11px;color:var(--muted);opacity:.7">+<?php echo e(count($a->explanation) - 2); ?> more…</li>
+                                <?php if(count($explanations) > 2): ?>
+                                    <li style="font-size:11px;color:var(--muted);opacity:.7">+<?php echo e(count($explanations) - 2); ?> more…</li>
                                 <?php endif; ?>
                             </ul>
                         <?php else: ?> <span style="color:var(--muted);font-size:12px">—</span> <?php endif; ?>

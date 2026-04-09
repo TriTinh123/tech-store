@@ -72,6 +72,22 @@
         .switch-link a:hover{text-decoration:underline}
         .copy-note{text-align:center;font-size:11px;color:#cbd5e1;margin-top:28px;line-height:1.6}
         @media(max-width:768px){.auth-left{display:none}.auth-right{padding:32px 20px}}
+        /* Demo Panel */
+        .demo-toggle{width:100%;margin-top:14px;padding:9px 13px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:500;color:#64748b;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .2s;font-family:'Inter',sans-serif;gap:8px}
+        .demo-toggle:hover{background:#f1f5f9;color:#475569}
+        .demo-toggle .arrow{transition:transform .25s;font-size:10px;color:#94a3b8}
+        .demo-toggle.open .arrow{transform:rotate(180deg)}
+        .demo-toggle-left{display:flex;align-items:center;gap:7px}
+        .demo-panel{background:#fff;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;padding:12px 13px;margin-top:-2px;display:none;}
+        .demo-panel.open{display:block}
+        .demo-select-wrap{position:relative;margin-bottom:9px}
+        .demo-select-wrap select{width:100%;padding:8px 32px 8px 11px;border:1px solid #e2e8f0;border-radius:7px;font-size:13px;font-weight:400;color:#1e293b;background:#f8fafc;font-family:'Inter',sans-serif;appearance:none;cursor:pointer;outline:none;transition:border-color .2s}
+        .demo-select-wrap select:focus{border-color:#6366f1;background:#fff}
+        .demo-select-wrap::after{content:'\25BC';position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:9px;color:#94a3b8;pointer-events:none}
+        .demo-prediction{padding:8px 11px;border-radius:7px;font-size:11.5px;font-weight:500;display:flex;align-items:center;gap:7px}
+        .pred-normal{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+        .pred-otp{background:#fff7ed;color:#9a3412;border:1px solid #fed7aa}
+        .pred-attack{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
     </style>
 </head>
 <body>
@@ -155,6 +171,39 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
                 </div>
+
+                
+                <input type="hidden" name="demo_mode" id="demo_mode" value="0">
+                <input type="hidden" name="demo_failed_attempts" id="demo_failed_attempts" value="0">
+                <input type="hidden" name="demo_new_ip" id="demo_new_ip" value="0">
+                <input type="hidden" name="demo_new_device" id="demo_new_device" value="0">
+                <input type="hidden" name="demo_geo_changed" id="demo_geo_changed" value="0">
+                <input type="hidden" name="demo_ip_count" id="demo_ip_count" value="0">
+                <input type="hidden" name="demo_fake_ip" id="demo_fake_ip" value="">
+
+                <button type="button" class="demo-toggle" id="demoToggleBtn" onclick="toggleDemo()">
+                    <span class="demo-toggle-left"><i class="fas fa-shield-halved" style="color:#94a3b8;font-size:12px"></i> Security scenario</span>
+                    <i class="fas fa-chevron-down arrow"></i>
+                </button>
+                <div class="demo-panel" id="demoPanel">
+                    <div class="demo-select-wrap">
+                        <select id="demoSelect" onchange="selectScenario(this.value)">
+                            <option value="normal">Trusted device — Vietnam, business hours</option>
+                            <option value="foreign">Unknown location — New York, US (104.18.x.x)</option>
+                            <option value="night">Unusual time — 3:12 AM, unrecognized device</option>
+                            <option value="device">New device — Windows PC switched to iPhone 16</option>
+                            <option value="vpn">High-risk region — Moscow, RU / VPN detected</option>
+                            <option value="brute">Brute-force attack — 12 failed attempts, 5 IPs</option>
+                        </select>
+                    </div>
+                    <div style="display:none"></div>
+                    <div class="demo-prediction pred-normal" id="demoPred">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="demoPredText">Trusted context detected — signing in directly.</span>
+                    </div>
+                </div>
+                
+
                 <div class="rf-row">
                     <label><input type="checkbox" name="remember" <?php echo e(old('remember') ? 'checked' : ''); ?>> Remember me</label>
                     <a href="<?php echo e(route('password.forgot')); ?>">Forgot password?</a>
@@ -184,6 +233,47 @@ unset($__errorArgs, $__bag); ?>
         const f=document.querySelector('form.login-form');f.addEventListener('submit',function(){const n=iv.length;let sp=150,ir=30;if(n>=2){sp=iv.reduce((a,b)=>a+b,0)/n;const v=iv.reduce((s,x)=>s+Math.pow(x-sp,2),0)/n;ir=Math.sqrt(v);}setHiddenField(f,'keystroke_speed_ms',Math.round(sp));setHiddenField(f,'keystroke_irregularity',Math.round(ir));setHiddenField(f,'screen_w',screen.width);setHiddenField(f,'screen_h',screen.height);setHiddenField(f,'timezone',Intl.DateTimeFormat().resolvedOptions().timeZone);});
     })();
     (function(){let cl=0;const t0=performance.now();document.addEventListener('click',function(){cl++;});const f=document.querySelector('form.login-form');f.addEventListener('submit',function(){const m=Math.max((performance.now()-t0)/60000,1/60);setHiddenField(f,'click_count_per_min',Math.round(cl/m));});})();
+    // ── Demo Mode ─────────────────────────────────────────────────────────
+    const SCENARIOS = {
+        normal:  { failed:0,  new_ip:'0', new_device:'0', geo:'0', ip_count:0, fake_ip:'',             level:'normal',
+                   pred:'<i class="fas fa-check-circle"></i> <span>Trusted context detected — signing in directly. No additional verification required.</span>' },
+        foreign: { failed:0,  new_ip:'1', new_device:'1', geo:'1', ip_count:0, fake_ip:'104.18.14.101', level:'otp',
+                   pred:'<i class="fas fa-triangle-exclamation"></i> <span>Sign-in from unknown location (US). Sending verification code to your email (Factor 2).</span>' },
+        night:   { failed:3,  new_ip:'1', new_device:'1', geo:'0', ip_count:0, fake_ip:'45.33.32.156',  level:'otp',
+                   pred:'<i class="fas fa-triangle-exclamation"></i> <span>Unusual sign-in time (3 AM) with unrecognized device. Email verification required.</span>' },
+        device:  { failed:0,  new_ip:'1', new_device:'1', geo:'0', ip_count:0, fake_ip:'104.244.42.65', level:'otp',
+                   pred:'<i class="fas fa-triangle-exclamation"></i> <span>New device and IP address detected. Please verify your identity via email OTP.</span>' },
+        vpn:     { failed:2,  new_ip:'1', new_device:'1', geo:'1', ip_count:3, fake_ip:'185.220.101.5', level:'otp',
+                   pred:'<i class="fas fa-shield-halved"></i> <span>High-risk region &amp; VPN detected. Multi-factor verification required (Factor 2 → Factor 3).</span>' },
+        brute:   { failed:12, new_ip:'0', new_device:'0', geo:'0', ip_count:5, fake_ip:'',             level:'attack',
+                   pred:'<i class="fas fa-ban"></i> <span>Brute-force attack detected. Account has been locked and security alert sent.</span>' },
+    };
+    function toggleDemo(){
+        const btn=document.getElementById('demoToggleBtn');
+        const panel=document.getElementById('demoPanel');
+        btn.classList.toggle('open');
+        panel.classList.toggle('open');
+        if(panel.classList.contains('open')) selectScenario('normal');
+        else document.getElementById('demo_mode').value='0';
+    }
+    function selectScenario(key){
+        const s=SCENARIOS[key];
+        if(!s) return;
+        document.getElementById('demo_mode').value= key==='normal'?'0':'1';
+        document.getElementById('demo_failed_attempts').value=s.failed;
+        document.getElementById('demo_new_ip').value=s.new_ip;
+        document.getElementById('demo_new_device').value=s.new_device;
+        document.getElementById('demo_geo_changed').value=s.geo;
+        document.getElementById('demo_ip_count').value=s.ip_count;
+        document.getElementById('demo_fake_ip').value=s.fake_ip||'';
+        const pred=document.getElementById('demoPred');
+        const txt=document.getElementById('demoPredText');
+        pred.className='demo-prediction';
+        if(s.level==='attack') pred.classList.add('pred-attack');
+        else if(s.level==='otp') pred.classList.add('pred-otp');
+        else pred.classList.add('pred-normal');
+        txt.innerHTML=s.pred;
+    }
 </script>
 </body>
 </html>
