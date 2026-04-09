@@ -72,6 +72,34 @@
         .switch-link a:hover{text-decoration:underline}
         .copy-note{text-align:center;font-size:11px;color:#cbd5e1;margin-top:28px;line-height:1.6}
         @media(max-width:768px){.auth-left{display:none}.auth-right{padding:32px 20px}}
+        /* Demo Panel */
+        .demo-toggle{width:100%;margin-top:14px;padding:10px 14px;background:#fefce8;border:1.5px dashed #fbbf24;border-radius:10px;font-size:12.5px;font-weight:600;color:#92400e;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .2s;font-family:'Inter',sans-serif;}
+        .demo-toggle:hover{background:#fef9c3;border-color:#f59e0b}
+        .demo-toggle .arrow{transition:transform .25s}
+        .demo-toggle.open .arrow{transform:rotate(180deg)}
+        .demo-panel{background:#fffbeb;border:1.5px solid #fde68a;border-top:none;border-radius:0 0 10px 10px;padding:16px;margin-top:-6px;display:none;}
+        .demo-panel.open{display:block}
+        .demo-panel-title{font-size:11px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+        .demo-options{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+        .demo-option{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:8px;background:#fff;border:1px solid #fde68a;cursor:pointer;transition:background .15s}
+        .demo-option:hover{background:#fef9c3}
+        .demo-option input[type=checkbox]{width:15px;height:15px;accent-color:#f59e0b;cursor:pointer;flex-shrink:0;margin-top:1px}
+        .demo-option-info{flex:1}
+        .demo-option-label{font-size:12.5px;font-weight:600;color:#374151;display:flex;align-items:center;gap:6px}
+        .demo-option-desc{font-size:11px;color:#9ca3af;margin-top:2px}
+        .demo-badge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:700}
+        .badge-red{background:#fee2e2;color:#dc2626}
+        .badge-yellow{background:#fef9c3;color:#b45309}
+        .badge-blue{background:#dbeafe;color:#1d4ed8}
+        .demo-fail-wrap{margin-bottom:14px}
+        .demo-fail-label{font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;display:flex;justify-content:space-between}
+        .demo-fail-label span{color:#ef4444;font-weight:700}
+        .demo-fail-wrap input[type=range]{width:100%;accent-color:#ef4444}
+        .demo-ticks{display:flex;justify-content:space-between;font-size:10px;color:#9ca3af;margin-top:3px}
+        .demo-prediction{padding:10px 12px;border-radius:8px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;}
+        .pred-normal{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
+        .pred-otp{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
+        .pred-attack{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5}
     </style>
 </head>
 <body>
@@ -147,6 +175,71 @@
                 </div>
                 <button type="submit" class="btn-primary"><i class="fas fa-sign-in-alt"></i> Sign In</button>
                 <div class="divider">or</div>
+
+                {{-- ══ DEMO MODE PANEL ══ --}}
+                <input type="hidden" name="demo_mode" id="demo_mode" value="0">
+                <input type="hidden" name="demo_failed_attempts" id="demo_failed_attempts" value="0">
+                <input type="hidden" name="demo_new_ip" id="demo_new_ip" value="0">
+                <input type="hidden" name="demo_new_device" id="demo_new_device" value="0">
+                <input type="hidden" name="demo_geo_changed" id="demo_geo_changed" value="0">
+                <input type="hidden" name="demo_ip_count" id="demo_ip_count" value="0">
+
+                <button type="button" class="demo-toggle" id="demoToggleBtn" onclick="toggleDemo()">
+                    <span>🎭 Demo Mode — Giả lập tấn công / bất thường</span>
+                    <i class="fas fa-chevron-down arrow"></i>
+                </button>
+                <div class="demo-panel" id="demoPanel">
+                    <div class="demo-panel-title"><i class="fas fa-flask"></i> Chọn tín hiệu bất thường để giả lập</div>
+
+                    <div class="demo-options">
+                        <label class="demo-option" onclick="updateDemoPred()">
+                            <input type="checkbox" id="chk_new_ip" onchange="syncDemo(); updateDemoPred()">
+                            <div class="demo-option-info">
+                                <div class="demo-option-label"><i class="fas fa-map-marker-alt" style="color:#3b82f6"></i> IP lạ (chưa từng đăng nhập) <span class="demo-badge badge-blue">IP</span></div>
+                                <div class="demo-option-desc">Giả lập đăng nhập từ địa chỉ IP chưa biết</div>
+                            </div>
+                        </label>
+                        <label class="demo-option" onclick="updateDemoPred()">
+                            <input type="checkbox" id="chk_new_device" onchange="syncDemo(); updateDemoPred()">
+                            <div class="demo-option-info">
+                                <div class="demo-option-label"><i class="fas fa-laptop" style="color:#8b5cf6"></i> Thiết bị lạ <span class="demo-badge badge-blue">Device</span></div>
+                                <div class="demo-option-desc">Giả lập trình duyệt / thiết bị chưa từng dùng</div>
+                            </div>
+                        </label>
+                        <label class="demo-option" onclick="updateDemoPred()">
+                            <input type="checkbox" id="chk_geo" onchange="syncDemo(); updateDemoPred()">
+                            <div class="demo-option-info">
+                                <div class="demo-option-label"><i class="fas fa-globe" style="color:#10b981"></i> Vị trí địa lý thay đổi <span class="demo-badge badge-yellow">Geo</span></div>
+                                <div class="demo-option-desc">Giả lập đăng nhập từ quốc gia khác</div>
+                            </div>
+                        </label>
+                        <label class="demo-option" onclick="updateDemoPred()">
+                            <input type="checkbox" id="chk_multi_ip" onchange="syncDemo(); updateDemoPred()">
+                            <div class="demo-option-info">
+                                <div class="demo-option-label"><i class="fas fa-network-wired" style="color:#f59e0b"></i> Nhiều IP trong 10 phút <span class="demo-badge badge-yellow">&gt;2 IPs</span></div>
+                                <div class="demo-option-desc">Giả lập dùng 3+ địa chỉ IP liên tục</div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="demo-fail-wrap">
+                        <div class="demo-fail-label">
+                            Số lần sai mật khẩu giả lập:
+                            <span id="fail_val_label">0 lần</span>
+                        </div>
+                        <input type="range" id="demo_fail_slider" min="0" max="12" step="1" value="0"
+                               oninput="syncFailSlider(this.value); updateDemoPred()">
+                        <div class="demo-ticks">
+                            <span>0</span><span>3 (OTP)</span><span>6</span><span>10 (Lock)</span><span>12</span>
+                        </div>
+                    </div>
+
+                    <div class="demo-prediction pred-normal" id="demoPred">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="demoPredText">Bình thường — AI sẽ cho đăng nhập thẳng</span>
+                    </div>
+                </div>
+                {{-- ══ END DEMO ══ --}}
                 <button type="button" class="btn-google" onclick="loginWithGoogle()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC04"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
                     Continue with Google
@@ -170,6 +263,50 @@
         const f=document.querySelector('form.login-form');f.addEventListener('submit',function(){const n=iv.length;let sp=150,ir=30;if(n>=2){sp=iv.reduce((a,b)=>a+b,0)/n;const v=iv.reduce((s,x)=>s+Math.pow(x-sp,2),0)/n;ir=Math.sqrt(v);}setHiddenField(f,'keystroke_speed_ms',Math.round(sp));setHiddenField(f,'keystroke_irregularity',Math.round(ir));setHiddenField(f,'screen_w',screen.width);setHiddenField(f,'screen_h',screen.height);setHiddenField(f,'timezone',Intl.DateTimeFormat().resolvedOptions().timeZone);});
     })();
     (function(){let cl=0;const t0=performance.now();document.addEventListener('click',function(){cl++;});const f=document.querySelector('form.login-form');f.addEventListener('submit',function(){const m=Math.max((performance.now()-t0)/60000,1/60);setHiddenField(f,'click_count_per_min',Math.round(cl/m));});})();
+    // ── Demo Mode ─────────────────────────────────────────────────────────
+    function toggleDemo(){
+        const btn=document.getElementById('demoToggleBtn');
+        const panel=document.getElementById('demoPanel');
+        btn.classList.toggle('open');
+        panel.classList.toggle('open');
+        const on=panel.classList.contains('open');
+        document.getElementById('demo_mode').value=on?'1':'0';
+        if(on) updateDemoPred();
+    }
+    function syncDemo(){
+        document.getElementById('demo_mode').value='1';
+        document.getElementById('demo_new_ip').value=document.getElementById('chk_new_ip').checked?'1':'0';
+        document.getElementById('demo_new_device').value=document.getElementById('chk_new_device').checked?'1':'0';
+        document.getElementById('demo_geo_changed').value=document.getElementById('chk_geo').checked?'1':'0';
+        document.getElementById('demo_ip_count').value=document.getElementById('chk_multi_ip').checked?'3':'0';
+    }
+    function syncFailSlider(v){
+        document.getElementById('demo_failed_attempts').value=v;
+        document.getElementById('fail_val_label').textContent=v+' lần';
+    }
+    function updateDemoPred(){
+        const fail=parseInt(document.getElementById('demo_fail_slider').value)||0;
+        const newIp=document.getElementById('chk_new_ip').checked;
+        const newDev=document.getElementById('chk_new_device').checked;
+        const geo=document.getElementById('chk_geo').checked;
+        const multiIp=document.getElementById('chk_multi_ip').checked;
+        const pred=document.getElementById('demoPred');
+        const txt=document.getElementById('demoPredText');
+        let level='normal';
+        if(fail>=10||multiIp) level='attack';
+        else if(fail>=3||(newIp&&newDev)||geo) level='otp';
+        pred.className='demo-prediction';
+        if(level==='attack'){
+            pred.classList.add('pred-attack');
+            txt.innerHTML='<strong>🚨 TẤN CÔNG</strong> — AI sẽ khóa tài khoản ngay';
+        } else if(level==='otp'){
+            pred.classList.add('pred-otp');
+            txt.innerHTML='<strong>⚠️ Nghi ngờ</strong> — Hệ thống sẽ yêu cầu OTP (F2)';
+        } else {
+            pred.classList.add('pred-normal');
+            txt.innerHTML='<strong>✅ Bình thường</strong> — AI sẽ cho đăng nhập thẳng';
+        }
+    }
 </script>
 </body>
 </html>

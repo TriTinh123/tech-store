@@ -35,6 +35,20 @@ class AuditLogService
      */
     public function isSuspicious(Request $request, User $user): bool
     {
+        // ── Demo Mode: override toàn bộ bằng giá trị giả lập ──────────────
+        if ($request->input('demo_mode') === '1') {
+            $failedCount = (int) $request->input('demo_failed_attempts', 0);
+            $ipCount     = (int) $request->input('demo_ip_count', 0) > 2 ? 3 : 1;
+            $isNewIp     = $request->input('demo_new_ip')     === '1';
+            $isNewDevice = $request->input('demo_new_device') === '1';
+            $geoChanged  = $request->input('demo_geo_changed') === '1';
+
+            return $failedCount >= self::FAIL_SUSPECT
+                || $ipCount > 2
+                || ($isNewIp && $isNewDevice)
+                || $geoChanged;
+        }
+
         $win = now()->subMinutes(self::TIME_WINDOW);
 
         $base = LoginAttempt::where('user_id', $user->id)
