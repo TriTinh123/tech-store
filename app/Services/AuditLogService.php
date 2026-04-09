@@ -145,7 +145,7 @@ class AuditLogService
 
         // Dispatch async — does not block the login response
         if ($needsAi) {
-            AnalyzeLoginBehavior::dispatch($features, $log->id, $user?->id);
+            AnalyzeLoginBehavior::dispatch($features, (int) $log->getKey(), $user?->id);
         }
 
         return $log;
