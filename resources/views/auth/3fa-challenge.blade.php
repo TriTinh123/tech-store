@@ -187,7 +187,7 @@ video{width:260px;height:195px;object-fit:cover;background:#0f172a;display:block
                     <video id="video" autoplay muted playsinline></video>
                     <canvas id="overlay"></canvas>
                 </div>
-                <br>
+               <br>
                 <button type="button" class="btn-start-bio" id="startBioBtn" onclick="startBiometric()">
                     <i class="fa-solid fa-camera"></i> Start face recognition
                 </button>

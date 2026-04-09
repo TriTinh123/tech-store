@@ -150,7 +150,7 @@
             </div>
 
             <button type="submit" class="btn-verify" id="submitBtn">
-                ✅ Verify & Place Order
+                Verify & Place Order
             </button>
         </form>
 
