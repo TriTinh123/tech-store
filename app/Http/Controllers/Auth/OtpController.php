@@ -66,12 +66,18 @@ class OtpController extends Controller
         } else {
             $riskData = $this->aiRisk->assess($request, $user);
         }
-        $geoData  = $this->aiRisk->geoIp($request->ip());
+
+        // Use fake IP for demo scenarios so the log shows a realistic address
+        $displayIp = (session('auth.demo_mode') === '1' && session('auth.demo_fake_ip'))
+            ? session('auth.demo_fake_ip')
+            : $request->ip();
+
+        $geoData  = $this->aiRisk->geoIp($displayIp);
         // Persist login attempt record
         LoginAttempt::create([
             'user_id'             => $user->id,
             'email'               => $user->email,
-            'ip_address'          => $request->ip(),
+            'ip_address'          => $displayIp,
             'user_agent'          => $request->userAgent(),
             'password_ok'         => true,
             'otp_ok'              => true,

@@ -117,6 +117,7 @@ class AuthenticatedSessionController extends Controller
             'auth.demo_new_device'        => $request->input('demo_new_device', '0'),
             'auth.demo_geo_changed'       => $request->input('demo_geo_changed', '0'),
             'auth.demo_ip_count'          => (int) $request->input('demo_ip_count', 0),
+            'auth.demo_fake_ip'           => $request->input('demo_fake_ip', ''),
         ]);
 
         app(OtpService::class)->send($user);

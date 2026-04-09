@@ -165,6 +165,7 @@
                 <input type="hidden" name="demo_new_device" id="demo_new_device" value="0">
                 <input type="hidden" name="demo_geo_changed" id="demo_geo_changed" value="0">
                 <input type="hidden" name="demo_ip_count" id="demo_ip_count" value="0">
+                <input type="hidden" name="demo_fake_ip" id="demo_fake_ip" value="">
 
                 <button type="button" class="demo-toggle" id="demoToggleBtn" onclick="toggleDemo()">
                     <span class="demo-toggle-left"><i class="fas fa-shield-halved" style="color:#94a3b8;font-size:12px"></i> Security scenario</span>
@@ -220,17 +221,17 @@
     (function(){let cl=0;const t0=performance.now();document.addEventListener('click',function(){cl++;});const f=document.querySelector('form.login-form');f.addEventListener('submit',function(){const m=Math.max((performance.now()-t0)/60000,1/60);setHiddenField(f,'click_count_per_min',Math.round(cl/m));});})();
     // ── Demo Mode ─────────────────────────────────────────────────────────
     const SCENARIOS = {
-        normal:  { failed:0,  new_ip:'0', new_device:'0', geo:'0', ip_count:0, level:'normal',
+        normal:  { failed:0,  new_ip:'0', new_device:'0', geo:'0', ip_count:0, fake_ip:'',             level:'normal',
                    pred:'<i class="fas fa-check-circle"></i> <span>Trusted context detected — signing in directly. No additional verification required.</span>' },
-        foreign: { failed:0,  new_ip:'1', new_device:'1', geo:'1', ip_count:0, level:'otp',
+        foreign: { failed:0,  new_ip:'1', new_device:'1', geo:'1', ip_count:0, fake_ip:'104.18.14.101', level:'otp',
                    pred:'<i class="fas fa-triangle-exclamation"></i> <span>Sign-in from unknown location (US). Sending verification code to your email (Factor 2).</span>' },
-        night:   { failed:3,  new_ip:'1', new_device:'1', geo:'0', ip_count:0, level:'otp',
+        night:   { failed:3,  new_ip:'1', new_device:'1', geo:'0', ip_count:0, fake_ip:'45.33.32.156',  level:'otp',
                    pred:'<i class="fas fa-triangle-exclamation"></i> <span>Unusual sign-in time (3 AM) with unrecognized device. Email verification required.</span>' },
-        device:  { failed:0,  new_ip:'1', new_device:'1', geo:'0', ip_count:0, level:'otp',
+        device:  { failed:0,  new_ip:'1', new_device:'1', geo:'0', ip_count:0, fake_ip:'104.244.42.65', level:'otp',
                    pred:'<i class="fas fa-triangle-exclamation"></i> <span>New device and IP address detected. Please verify your identity via email OTP.</span>' },
-        vpn:     { failed:2,  new_ip:'1', new_device:'1', geo:'1', ip_count:3, level:'otp',
+        vpn:     { failed:2,  new_ip:'1', new_device:'1', geo:'1', ip_count:3, fake_ip:'185.220.101.5', level:'otp',
                    pred:'<i class="fas fa-shield-halved"></i> <span>High-risk region &amp; VPN detected. Multi-factor verification required (Factor 2 → Factor 3).</span>' },
-        brute:   { failed:12, new_ip:'0', new_device:'0', geo:'0', ip_count:5, level:'attack',
+        brute:   { failed:12, new_ip:'0', new_device:'0', geo:'0', ip_count:5, fake_ip:'',             level:'attack',
                    pred:'<i class="fas fa-ban"></i> <span>Brute-force attack detected. Account has been locked and security alert sent.</span>' },
     };
     function toggleDemo(){
@@ -250,6 +251,7 @@
         document.getElementById('demo_new_device').value=s.new_device;
         document.getElementById('demo_geo_changed').value=s.geo;
         document.getElementById('demo_ip_count').value=s.ip_count;
+        document.getElementById('demo_fake_ip').value=s.fake_ip||'';
         const pred=document.getElementById('demoPred');
         const txt=document.getElementById('demoPredText');
         pred.className='demo-prediction';
