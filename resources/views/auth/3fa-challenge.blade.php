@@ -160,6 +160,11 @@ video{width:260px;height:195px;object-fit:cover;background:#0f172a;display:block
         @error('biometric')
             <div class="alert-err" style="margin-bottom:14px">
                 <i class="fa-solid fa-circle-exclamation"></i>{{ $message }}
+                <div style="margin-top:8px;font-size:11.5px;opacity:.8">
+                    Try better lighting, face the camera straight, or
+                    <a href="{{ route('auth.face.enroll.form') }}" style="color:#fca5a5;text-decoration:underline">re-enroll your face</a>
+                    after logging in via Security Question.
+                </div>
             </div>
         @enderror
 

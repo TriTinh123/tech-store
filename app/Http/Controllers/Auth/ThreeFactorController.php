@@ -99,7 +99,7 @@ class ThreeFactorController extends Controller
 
             $distance = $this->faceDistance($sentDescriptor, $enrolled);
 
-            if ($distance > 0.55) {
+            if ($distance > 0.65) {
                 // Face does NOT match — send security alert email and block
                 Mail::to($user->email)->send(new FaceAlertMail(
                     userName:    $user->name,
