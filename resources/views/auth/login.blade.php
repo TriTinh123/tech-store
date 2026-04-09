@@ -79,24 +79,25 @@
         .demo-toggle.open .arrow{transform:rotate(180deg)}
         .demo-panel{background:#fffbeb;border:1.5px solid #fde68a;border-top:none;border-radius:0 0 10px 10px;padding:16px;margin-top:-6px;display:none;}
         .demo-panel.open{display:block}
-        .demo-panel-title{font-size:11px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
-        .demo-options{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
-        .demo-option{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:8px;background:#fff;border:1px solid #fde68a;cursor:pointer;transition:background .15s}
-        .demo-option:hover{background:#fef9c3}
-        .demo-option input[type=checkbox]{width:15px;height:15px;accent-color:#f59e0b;cursor:pointer;flex-shrink:0;margin-top:1px}
-        .demo-option-info{flex:1}
-        .demo-option-label{font-size:12.5px;font-weight:600;color:#374151;display:flex;align-items:center;gap:6px}
-        .demo-option-desc{font-size:11px;color:#9ca3af;margin-top:2px}
+        .demo-panel-title{font-size:11px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
         .demo-badge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:700}
         .badge-red{background:#fee2e2;color:#dc2626}
         .badge-yellow{background:#fef9c3;color:#b45309}
         .badge-blue{background:#dbeafe;color:#1d4ed8}
-        .demo-fail-wrap{margin-bottom:14px}
-        .demo-fail-label{font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;display:flex;justify-content:space-between}
-        .demo-fail-label span{color:#ef4444;font-weight:700}
-        .demo-fail-wrap input[type=range]{width:100%;accent-color:#ef4444}
-        .demo-ticks{display:flex;justify-content:space-between;font-size:10px;color:#9ca3af;margin-top:3px}
-        .demo-prediction{padding:10px 12px;border-radius:8px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;}
+        .badge-green{background:#dcfce7;color:#15803d}
+        /* Scenario cards */
+        .scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+        .scenario-card{border:2px solid #e5e7eb;border-radius:10px;padding:10px 11px;cursor:pointer;background:#fff;transition:all .18s;position:relative;text-align:left;font-family:'Inter',sans-serif;}
+        .scenario-card:hover{border-color:#f59e0b;background:#fef9c3}
+        .scenario-card.selected{border-color:#f59e0b;background:#fef9c3;box-shadow:0 0 0 3px rgba(245,158,11,.2)}
+        .scenario-card.selected-red{border-color:#ef4444;background:#fef2f2;box-shadow:0 0 0 3px rgba(239,68,68,.15)}
+        .scenario-card.reset-card{border-color:#e2e8f0;background:#f8fafc;}
+        .scenario-card.reset-card:hover{border-color:#94a3b8;background:#f1f5f9}
+        .sc-icon{font-size:20px;margin-bottom:5px;display:block}
+        .sc-title{font-size:12px;font-weight:700;color:#1e293b;margin-bottom:2px;line-height:1.3}
+        .sc-desc{font-size:10.5px;color:#64748b;line-height:1.4}
+        .sc-badge{position:absolute;top:7px;right:7px}
+        .demo-prediction{padding:10px 12px;border-radius:8px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;margin-top:4px}
         .pred-normal{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
         .pred-otp{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
         .pred-attack{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5}
@@ -189,49 +190,51 @@
                     <i class="fas fa-chevron-down arrow"></i>
                 </button>
                 <div class="demo-panel" id="demoPanel">
-                    <div class="demo-panel-title"><i class="fas fa-flask"></i> Chọn tín hiệu bất thường để giả lập</div>
+                    <div class="demo-panel-title"><i class="fas fa-flask"></i> Chọn kịch bản giả lập</div>
 
-                    <div class="demo-options">
-                        <label class="demo-option" onclick="updateDemoPred()">
-                            <input type="checkbox" id="chk_new_ip" onchange="syncDemo(); updateDemoPred()">
-                            <div class="demo-option-info">
-                                <div class="demo-option-label"><i class="fas fa-map-marker-alt" style="color:#3b82f6"></i> IP lạ (chưa từng đăng nhập) <span class="demo-badge badge-blue">IP</span></div>
-                                <div class="demo-option-desc">Giả lập đăng nhập từ địa chỉ IP chưa biết</div>
-                            </div>
-                        </label>
-                        <label class="demo-option" onclick="updateDemoPred()">
-                            <input type="checkbox" id="chk_new_device" onchange="syncDemo(); updateDemoPred()">
-                            <div class="demo-option-info">
-                                <div class="demo-option-label"><i class="fas fa-laptop" style="color:#8b5cf6"></i> Thiết bị lạ <span class="demo-badge badge-blue">Device</span></div>
-                                <div class="demo-option-desc">Giả lập trình duyệt / thiết bị chưa từng dùng</div>
-                            </div>
-                        </label>
-                        <label class="demo-option" onclick="updateDemoPred()">
-                            <input type="checkbox" id="chk_geo" onchange="syncDemo(); updateDemoPred()">
-                            <div class="demo-option-info">
-                                <div class="demo-option-label"><i class="fas fa-globe" style="color:#10b981"></i> Vị trí địa lý thay đổi <span class="demo-badge badge-yellow">Geo</span></div>
-                                <div class="demo-option-desc">Giả lập đăng nhập từ quốc gia khác</div>
-                            </div>
-                        </label>
-                        <label class="demo-option" onclick="updateDemoPred()">
-                            <input type="checkbox" id="chk_multi_ip" onchange="syncDemo(); updateDemoPred()">
-                            <div class="demo-option-info">
-                                <div class="demo-option-label"><i class="fas fa-network-wired" style="color:#f59e0b"></i> Nhiều IP trong 10 phút <span class="demo-badge badge-yellow">&gt;2 IPs</span></div>
-                                <div class="demo-option-desc">Giả lập dùng 3+ địa chỉ IP liên tục</div>
-                            </div>
-                        </label>
-                    </div>
-
-                    <div class="demo-fail-wrap">
-                        <div class="demo-fail-label">
-                            Số lần sai mật khẩu giả lập:
-                            <span id="fail_val_label">0 lần</span>
-                        </div>
-                        <input type="range" id="demo_fail_slider" min="0" max="12" step="1" value="0"
-                               oninput="syncFailSlider(this.value); updateDemoPred()">
-                        <div class="demo-ticks">
-                            <span>0</span><span>3 (OTP)</span><span>6</span><span>10 (Lock)</span><span>12</span>
-                        </div>
+                    <div class="scenario-grid">
+                        <!-- Scenario 1: Normal -->
+                        <button type="button" class="scenario-card reset-card selected" id="sc_normal" onclick="selectScenario('normal')">
+                            <span class="sc-icon">✅</span>
+                            <div class="sc-title">Đăng nhập bình thường</div>
+                            <div class="sc-desc">Việt Nam · Thiết bị quen · Giờ hành chính</div>
+                            <span class="sc-badge"><span class="demo-badge badge-green">Normal</span></span>
+                        </button>
+                        <!-- Scenario 2: Foreign IP -->
+                        <button type="button" class="scenario-card" id="sc_foreign" onclick="selectScenario('foreign')">
+                            <span class="sc-icon">🇺🇸</span>
+                            <div class="sc-title">IP từ Mỹ</div>
+                            <div class="sc-desc">IP: 104.18.x.x · New York · Thiết bị lạ</div>
+                            <span class="sc-badge"><span class="demo-badge badge-yellow">OTP</span></span>
+                        </button>
+                        <!-- Scenario 3: Night login -->
+                        <button type="button" class="scenario-card" id="sc_night" onclick="selectScenario('night')">
+                            <span class="sc-icon">🌙</span>
+                            <div class="sc-title">Đăng nhập lúc 3 giờ sáng</div>
+                            <div class="sc-desc">IP lạ · 03:12 AM · Thiết bị chưa biết</div>
+                            <span class="sc-badge"><span class="demo-badge badge-yellow">OTP</span></span>
+                        </button>
+                        <!-- Scenario 4: Brute force -->
+                        <button type="button" class="scenario-card" id="sc_brute" onclick="selectScenario('brute')">
+                            <span class="sc-icon">💀</span>
+                            <div class="sc-title">Brute-force tấn công</div>
+                            <div class="sc-desc">12 lần sai trong 10 phút · 5 IP khác nhau</div>
+                            <span class="sc-badge"><span class="demo-badge badge-red">LOCK</span></span>
+                        </button>
+                        <!-- Scenario 5: Russia/China VPN -->
+                        <button type="button" class="scenario-card" id="sc_vpn" onclick="selectScenario('vpn')">
+                            <span class="sc-icon">🇷🇺</span>
+                            <div class="sc-title">IP từ Nga / VPN</div>
+                            <div class="sc-desc">IP: 195.82.x.x · Moscow · Geo thay đổi đột ngột</div>
+                            <span class="sc-badge"><span class="demo-badge badge-red">OTP+F3</span></span>
+                        </button>
+                        <!-- Scenario 6: Device switch -->
+                        <button type="button" class="scenario-card" id="sc_device" onclick="selectScenario('device')">
+                            <span class="sc-icon">📱</span>
+                            <div class="sc-title">Đổi thiết bị đột ngột</div>
+                            <div class="sc-desc">PC Windows → iPhone 16 · IP khác · Cùng email</div>
+                            <span class="sc-badge"><span class="demo-badge badge-yellow">OTP</span></span>
+                        </button>
                     </div>
 
                     <div class="demo-prediction pred-normal" id="demoPred">
@@ -264,48 +267,53 @@
     })();
     (function(){let cl=0;const t0=performance.now();document.addEventListener('click',function(){cl++;});const f=document.querySelector('form.login-form');f.addEventListener('submit',function(){const m=Math.max((performance.now()-t0)/60000,1/60);setHiddenField(f,'click_count_per_min',Math.round(cl/m));});})();
     // ── Demo Mode ─────────────────────────────────────────────────────────
+    // Scenario definitions
+    const SCENARIOS = {
+        normal:  { failed:0,  new_ip:'0', new_device:'0', geo:'0', ip_count:0, level:'normal',
+                   pred:'<strong>✅ Bình thường</strong> — AI cho đăng nhập thẳng, không cần OTP' },
+        foreign: { failed:0,  new_ip:'1', new_device:'1', geo:'1', ip_count:0, level:'otp',
+                   pred:'<strong>⚠️ IP Mỹ + thiết bị lạ</strong> — Hệ thống gửi OTP (F2) → AI đánh giá F3' },
+        night:   { failed:3,  new_ip:'1', new_device:'1', geo:'0', ip_count:0, level:'otp',
+                   pred:'<strong>⚠️ Đăng nhập 3 giờ sáng + IP lạ</strong> — Bị yêu cầu OTP (F2)' },
+        brute:   { failed:12, new_ip:'0', new_device:'0', geo:'0', ip_count:5, level:'attack',
+                   pred:'<strong>🚨 Brute-force phát hiện</strong> — AI khoá tài khoản ngay lập tức' },
+        vpn:     { failed:2,  new_ip:'1', new_device:'1', geo:'1', ip_count:3, level:'otp',
+                   pred:'<strong>🚨 IP Nga / VPN + geo đột ngột</strong> — OTP bắt buộc → chuyển lên F3' },
+        device:  { failed:0,  new_ip:'1', new_device:'1', geo:'0', ip_count:0, level:'otp',
+                   pred:'<strong>⚠️ Đổi thiết bị đột ngột</strong> — IP lạ + device lạ → yêu cầu OTP (F2)' },
+    };
     function toggleDemo(){
         const btn=document.getElementById('demoToggleBtn');
         const panel=document.getElementById('demoPanel');
         btn.classList.toggle('open');
         panel.classList.toggle('open');
         const on=panel.classList.contains('open');
-        document.getElementById('demo_mode').value=on?'1':'0';
-        if(on) updateDemoPred();
+        if(!on){ document.getElementById('demo_mode').value='0'; }
     }
-    function syncDemo(){
-        document.getElementById('demo_mode').value='1';
-        document.getElementById('demo_new_ip').value=document.getElementById('chk_new_ip').checked?'1':'0';
-        document.getElementById('demo_new_device').value=document.getElementById('chk_new_device').checked?'1':'0';
-        document.getElementById('demo_geo_changed').value=document.getElementById('chk_geo').checked?'1':'0';
-        document.getElementById('demo_ip_count').value=document.getElementById('chk_multi_ip').checked?'3':'0';
-    }
-    function syncFailSlider(v){
-        document.getElementById('demo_failed_attempts').value=v;
-        document.getElementById('fail_val_label').textContent=v+' lần';
-    }
-    function updateDemoPred(){
-        const fail=parseInt(document.getElementById('demo_fail_slider').value)||0;
-        const newIp=document.getElementById('chk_new_ip').checked;
-        const newDev=document.getElementById('chk_new_device').checked;
-        const geo=document.getElementById('chk_geo').checked;
-        const multiIp=document.getElementById('chk_multi_ip').checked;
+    function selectScenario(key){
+        const s=SCENARIOS[key];
+        if(!s) return;
+        // Remove selected from all cards
+        document.querySelectorAll('.scenario-card').forEach(c=>{
+            c.classList.remove('selected','selected-red');
+        });
+        const card=document.getElementById('sc_'+key);
+        if(card) card.classList.add(s.level==='attack'?'selected-red':'selected');
+        // Set hidden fields
+        document.getElementById('demo_mode').value= key==='normal'?'0':'1';
+        document.getElementById('demo_failed_attempts').value=s.failed;
+        document.getElementById('demo_new_ip').value=s.new_ip;
+        document.getElementById('demo_new_device').value=s.new_device;
+        document.getElementById('demo_geo_changed').value=s.geo;
+        document.getElementById('demo_ip_count').value=s.ip_count;
+        // Update prediction badge
         const pred=document.getElementById('demoPred');
         const txt=document.getElementById('demoPredText');
-        let level='normal';
-        if(fail>=10||multiIp) level='attack';
-        else if(fail>=3||(newIp&&newDev)||geo) level='otp';
         pred.className='demo-prediction';
-        if(level==='attack'){
-            pred.classList.add('pred-attack');
-            txt.innerHTML='<strong>🚨 TẤN CÔNG</strong> — AI sẽ khóa tài khoản ngay';
-        } else if(level==='otp'){
-            pred.classList.add('pred-otp');
-            txt.innerHTML='<strong>⚠️ Nghi ngờ</strong> — Hệ thống sẽ yêu cầu OTP (F2)';
-        } else {
-            pred.classList.add('pred-normal');
-            txt.innerHTML='<strong>✅ Bình thường</strong> — AI sẽ cho đăng nhập thẳng';
-        }
+        if(s.level==='attack'){ pred.classList.add('pred-attack'); }
+        else if(s.level==='otp'){ pred.classList.add('pred-otp'); }
+        else { pred.classList.add('pred-normal'); }
+        txt.innerHTML=s.pred;
     }
 </script>
 </body>
