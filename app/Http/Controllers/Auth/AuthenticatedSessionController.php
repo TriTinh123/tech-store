@@ -57,6 +57,21 @@ class AuthenticatedSessionController extends Controller
         }
 
         // ── Đúng mật khẩu: AI kiểm tra hành vi ───────────────────────────
+
+        // Demo attack: ≥10 fail → khóa tài khoản ngay lập tức (tác động thật)
+        if ($request->input('demo_mode') === '1' && (int) $request->input('demo_failed_attempts', 0) >= 10) {
+            $user->update(['is_blocked' => true]);
+            try {
+                \Illuminate\Support\Facades\Mail::raw(
+                    "[🚨 TẤN CÔNG PHÁT HIỆN]\n\nAI phát hiện tấn công brute-force (demo). Tài khoản đã bị khóa.\nRisk score: 100",
+                    fn($m) => $m->to($user->email)->subject('🚨 Tài khoản bị khoá — AI phát hiện tấn công')
+                );
+            } catch (\Throwable) {}
+            throw ValidationException::withMessages([
+                'email' => '🚨 [DEMO] AI phát hiện tấn công brute-force — tài khoản đã bị khóa.',
+            ]);
+        }
+
         $suspicious = app(AuditLogService::class)->isSuspicious($request, $user);
 
         if (! $suspicious) {
@@ -77,7 +92,7 @@ class AuthenticatedSessionController extends Controller
             $request->session()->regenerate();
 
             return redirect()->intended(
-                $user->is_admin ? route('admin') : route('home')
+                $user->role === 'admin' ? route('admin') : route('home')
             );
         }
 
