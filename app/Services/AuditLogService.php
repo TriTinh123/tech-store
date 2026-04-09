@@ -29,13 +29,19 @@ class AuditLogService
     private const FAIL_SUSPECT = 3;  // ≥3 fail/window → đưa vào AI
 
     /**
-     * Kiểm tra nhanh xem login hiện tại có dấu hiệu nghi ngờ không.
-     * Dùng để quyết định có cần OTP hay không.
-     * Không ghi DB, chỉ đọc.
+     * Quick check: does this login attempt show suspicious signals?
+     * Used to decide whether OTP (F2) is required. Read-only, no DB writes.
      */
     public function isSuspicious(Request $request, User $user): bool
     {
-        // ── Demo Mode: override toàn bộ bằng giá trị giả lập ──────────────
+        // ── Cart value threshold: ≥ 2,000,000 VND always forces OTP ─────────
+        $cartValue = collect(session('cart', []))
+            ->sum(fn ($item) => ($item['price'] ?? 0) * ($item['qty'] ?? $item['quantity'] ?? 1));
+        if ($cartValue >= 2_000_000) {
+            return true;
+        }
+
+        // ── Demo Mode: override all signals with simulated values ────────────
         if ($request->input('demo_mode') === '1') {
             $failedCount = (int) $request->input('demo_failed_attempts', 0);
             $ipCount     = (int) $request->input('demo_ip_count', 0) > 2 ? 3 : 1;
@@ -58,7 +64,7 @@ class AuditLogService
         $ipCount     = (clone $base)->distinct('ip_address')->count('ip_address');
         $deviceCount = (clone $base)->distinct('user_agent')->count('user_agent');
 
-        // Thiết bị hoặc IP hiện tại có lạ không?
+        // Is the current IP or device fingerprint unknown?
         $knownIps     = $user->known_ips     ?? [];
         $knownDevices = $user->known_devices ?? [];
         $fp           = $this->deviceFingerprint($request);
@@ -68,7 +74,7 @@ class AuditLogService
         return $failedCount >= self::FAIL_SUSPECT
             || $ipCount > 2
             || $deviceCount > 2
-            || ($isNewIp && $isNewDevice);  // thiết bị lạ + IP lạ cùng lúc
+            || ($isNewIp && $isNewDevice);  // unknown device + unknown IP simultaneously
     }
 
     /**

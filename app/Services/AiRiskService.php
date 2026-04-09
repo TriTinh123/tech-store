@@ -83,6 +83,22 @@ class AiRiskService
                     );
                 }
 
+                // Hard rule: cart ≥ 2,000,000 VND always triggers 3FA (high-value transaction)
+                $cartValue = collect(session('cart', []))
+                    ->sum(fn ($item) => ($item['price'] ?? 0) * ($item['qty'] ?? $item['quantity'] ?? 1));
+                if ($cartValue >= 2_000_000) {
+                    $data['requires_3fa'] = true;
+                    $data['is_anomaly']   = true;
+                    if (!in_array($data['risk_level'] ?? '', ['high', 'critical'])) {
+                        $data['risk_level']   = 'high';
+                        $data['risk_numeric'] = max($data['risk_numeric'] ?? 60, 70);
+                    }
+                    $data['explanation'] = array_merge(
+                        $data['explanation'] ?? [],
+                        ['High-value transaction (≥ 2,000,000 ₫) — additional verification required']
+                    );
+                }
+
                 return $data;
             }
 
