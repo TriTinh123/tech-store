@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Verify your identity — {{ config('app.name') }}</title>
+    <title>Verify your identity — <?php echo e(config('app.name')); ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -97,7 +97,7 @@ video{width:260px;height:195px;object-fit:cover;background:#0f172a;display:block
 
 <div class="card">
 
-    {{-- Header --}}
+    
     <div class="card-header">
         <div class="shield-wrap">
             <div class="shield-icon">
@@ -110,15 +110,15 @@ video{width:260px;height:195px;object-fit:cover;background:#0f172a;display:block
 
 
 
-    {{-- Errors --}}
-    @if($errors->any())
+    
+    <?php if($errors->any()): ?>
         <div class="alert-err">
             <i class="fa-solid fa-circle-exclamation"></i>
-            <div>@foreach($errors->all() as $e){{ $e }}<br>@endforeach</div>
+            <div><?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $e): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php echo e($e); ?><br><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?></div>
         </div>
-    @endif
+    <?php endif; ?>
 
-    {{-- Method tabs --}}
+    
     <div class="method-selector">
         <button class="method-btn active" id="tab-question" onclick="switchTab('question')">
             <i class="fa-solid fa-key"></i> Security Q
@@ -131,13 +131,13 @@ video{width:260px;height:195px;object-fit:cover;background:#0f172a;display:block
         </button>
     </div>
 
-    {{-- Panel 1: Security Question --}}
+    
     <div class="panel active" id="panel-question">
-        <form method="POST" action="{{ route('auth.3fa.verify') }}">
-            @csrf
+        <form method="POST" action="<?php echo e(route('auth.3fa.verify')); ?>">
+            <?php echo csrf_field(); ?>
             <input type="hidden" name="method" value="security_question">
 
-            @php
+            <?php
             // Translate legacy Vietnamese questions stored in DB before the form was localised
             $viqMap = [
                 'Tên trường tiểu học của bạn là gì?'        => 'What was the name of your elementary school?',
@@ -158,19 +158,26 @@ video{width:260px;height:195px;object-fit:cover;background:#0f172a;display:block
             ];
             $raw             = $user->security_question ?? '';
             $displayQuestion = $viqMap[$raw] ?? ($raw ?: 'What is your registered email address?');
-            @endphp
+            ?>
 
             <div class="question-box">
                 <i class="fa-solid fa-circle-question"></i>
-                <span>{{ $displayQuestion }}</span>
+                <span><?php echo e($displayQuestion); ?></span>
             </div>
 
             <label class="field-label">Your answer</label>
             <input class="text-input" type="text" name="security_answer"
                    placeholder="Type your answer…" autocomplete="off" autofocus>
-            @error('security_answer')
-                <div class="field-error"><i class="fa-solid fa-triangle-exclamation"></i>{{ $message }}</div>
-            @enderror
+            <?php $__errorArgs = ['security_answer'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                <div class="field-error"><i class="fa-solid fa-triangle-exclamation"></i><?php echo e($message); ?></div>
+            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
 
             <button type="submit" class="btn-primary">
                 <i class="fa-solid fa-arrow-right"></i> Continue
@@ -178,29 +185,37 @@ video{width:260px;height:195px;object-fit:cover;background:#0f172a;display:block
         </form>
     </div>
 
-    {{-- Panel 2: Biometric --}}
+    
     <div class="panel" id="panel-biometric">
-        @error('biometric')
+        <?php $__errorArgs = ['biometric'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
             <div class="alert-err" style="margin-bottom:14px">
-                <i class="fa-solid fa-circle-exclamation"></i>{{ $message }}
+                <i class="fa-solid fa-circle-exclamation"></i><?php echo e($message); ?>
+
                 <div style="margin-top:8px;font-size:11.5px;opacity:.8">
                     Try better lighting, face the camera straight, or
-                    <a href="{{ route('auth.face.enroll.form') }}" style="color:#fca5a5;text-decoration:underline">re-enroll your face</a>
+                    <a href="<?php echo e(route('auth.face.enroll.form')); ?>" style="color:#fca5a5;text-decoration:underline">re-enroll your face</a>
                     after logging in via Security Question.
                 </div>
             </div>
-        @enderror
+        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
 
-        @if(! $user->face_descriptor)
+        <?php if(! $user->face_descriptor): ?>
             <div class="bio-warn">
                 <i class="fa-solid fa-triangle-exclamation" style="margin-top:1px"></i>
                 <span>No face profile set up yet. Sign in with Security Question or Email link, then
-                <a href="{{ route('auth.face.enroll.form') }}">enroll your face</a> in your profile.</span>
+                <a href="<?php echo e(route('auth.face.enroll.form')); ?>">enroll your face</a> in your profile.</span>
             </div>
-        @endif
+        <?php endif; ?>
 
-        <form method="POST" action="{{ route('auth.3fa.verify') }}" id="bioForm">
-            @csrf
+        <form method="POST" action="<?php echo e(route('auth.3fa.verify')); ?>" id="bioForm">
+            <?php echo csrf_field(); ?>
             <input type="hidden" name="method" value="biometric">
             <input type="hidden" name="biometric_verified" id="bioVerified" value="">
             <input type="hidden" name="face_descriptor" id="faceDescriptor" value="">
@@ -223,25 +238,26 @@ video{width:260px;height:195px;object-fit:cover;background:#0f172a;display:block
         </form>
     </div>
 
-    {{-- Panel 3: Email --}}
+    
     <div class="panel" id="panel-email">
-        @if(session('email_confirm_sent'))
+        <?php if(session('email_confirm_sent')): ?>
             <div class="email-sent">
                 <i class="fa-solid fa-circle-check"></i>
-                {{ session('email_confirm_sent') }}
+                <?php echo e(session('email_confirm_sent')); ?>
+
             </div>
-        @endif
+        <?php endif; ?>
 
         <div class="email-intro">
             <div class="mail-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
             <p>We'll send a <strong>secure sign-in link</strong> to<br>
-               <strong>{{ $user->email }}</strong><br>
+               <strong><?php echo e($user->email); ?></strong><br>
                Click the link to complete sign-in. Valid for <strong>15 minutes</strong>.
             </p>
         </div>
 
-        <form method="POST" action="{{ route('auth.3fa.email.send') }}">
-            @csrf
+        <form method="POST" action="<?php echo e(route('auth.3fa.email.send')); ?>">
+            <?php echo csrf_field(); ?>
             <button type="submit" class="btn-primary">
                 <i class="fa-solid fa-paper-plane"></i> Send sign-in link
             </button>
@@ -262,9 +278,9 @@ video{width:260px;height:195px;object-fit:cover;background:#0f172a;display:block
         document.getElementById('panel-' + name).classList.add('active');
     }
 
-    @if($errors->has('biometric'))
+    <?php if($errors->has('biometric')): ?>
     window.addEventListener('load', () => switchTab('biometric'));
-    @endif
+    <?php endif; ?>
 
     // ── Biometric: real face-api.js detection with canvas-animation fallback ────
     const _FACE_WEIGHTS = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js/weights';
@@ -420,3 +436,4 @@ video{width:260px;height:195px;object-fit:cover;background:#0f172a;display:block
 </script>
 </body>
 </html>
+<?php /**PATH C:\Users\ADMIN\ecomerce\resources\views/auth/3fa-challenge.blade.php ENDPATH**/ ?>

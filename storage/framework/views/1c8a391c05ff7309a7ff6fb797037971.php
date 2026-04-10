@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OTP Verification — {{ config('app.name') }}</title>
+<title>OTP Verification — <?php echo e(config('app.name')); ?></title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -128,27 +128,27 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <p>Enter the 6-digit code sent to your<br>registered email address</p>
     </div>
 
-    @if(session('info'))
+    <?php if(session('info')): ?>
     <div class="alert alert-info">
         <i class="fa-solid fa-circle-info"></i>
-        <span>{{ session('info') }}</span>
+        <span><?php echo e(session('info')); ?></span>
     </div>
-    @endif
+    <?php endif; ?>
 
-    @if($errors->any())
+    <?php if($errors->any()): ?>
     <div class="alert alert-danger" id="errAlert">
         <i class="fa-solid fa-circle-exclamation"></i>
-        <div>@foreach($errors->all() as $error){{ $error }}<br>@endforeach</div>
+        <div><?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php echo e($error); ?><br><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?></div>
     </div>
-    @endif
+    <?php endif; ?>
 
     <div class="info-row">
         <i class="fa-solid fa-lock"></i>
         <span>OTP is valid for <strong>10 minutes</strong>. Check inbox or spam folder.</span>
     </div>
 
-    <form method="POST" action="{{ route('auth.otp.verify') }}" id="otpForm">
-        @csrf
+    <form method="POST" action="<?php echo e(route('auth.otp.verify')); ?>" id="otpForm">
+        <?php echo csrf_field(); ?>
         <input type="hidden" name="otp_code" id="otpCode">
 
         <label class="otp-label">6-digit OTP code</label>
@@ -160,9 +160,16 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
             <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
         </div>
-        @error('otp_code')
-        <div class="field-error"><i class="fa-solid fa-triangle-exclamation"></i>{{ $message }}</div>
-        @enderror
+        <?php $__errorArgs = ['otp_code'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+        <div class="field-error"><i class="fa-solid fa-triangle-exclamation"></i><?php echo e($message); ?></div>
+        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
 
         <div class="timer-row">
             <span class="timer-label"><i class="fa-regular fa-clock"></i> Code expires in</span>
@@ -180,15 +187,15 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="div-line"></div>
     </div>
 
-    <form method="POST" action="{{ route('auth.otp.resend') }}">
-        @csrf
+    <form method="POST" action="<?php echo e(route('auth.otp.resend')); ?>">
+        <?php echo csrf_field(); ?>
         <button type="submit" class="btn-resend">
             <i class="fa-solid fa-rotate-right"></i> Resend OTP
         </button>
     </form>
 
     <div class="back-row">
-        <a href="{{ route('login') }}"><i class="fa-solid fa-arrow-left"></i> Back to login</a>
+        <a href="<?php echo e(route('login')); ?>"><i class="fa-solid fa-arrow-left"></i> Back to login</a>
     </div>
 
     <!-- Success overlay -->
@@ -257,11 +264,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         if(submitting) return false;
         submitting = true;
         sync(); // ensure hidden field is up-to-date
-        // Show loading state on button AFTER the form submission starts (safe for all browsers)
-        setTimeout(function(){
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying…';
-        }, 0);
-        // Let the form submit naturally
+        document.getElementById('successOverlay').classList.add('show');
+        // Let the form submit naturally — do NOT disable the button here
     };
 
     // Safety-net: sync hidden field right before any form submission
@@ -269,12 +273,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         sync();
     });
 
-    @if($errors->has('otp_code'))
+    <?php if($errors->has('otp_code')): ?>
     grid.classList.add('shake');
     boxes.forEach(function(b){ b.value=''; b.classList.remove('filled','done'); });
     sync(); // reset hidden field and disable button
     boxes[0].focus();
-    @endif
+    <?php endif; ?>
 
     var secs = 600, el = document.getElementById('countdown');
     var tick = setInterval(function(){
@@ -288,4 +292,4 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 })();
 </script>
 </body>
-</html>
+</html><?php /**PATH C:\Users\ADMIN\ecomerce\resources\views/auth/otp-verify.blade.php ENDPATH**/ ?>

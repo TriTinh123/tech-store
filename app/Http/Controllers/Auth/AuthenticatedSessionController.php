@@ -63,12 +63,12 @@ class AuthenticatedSessionController extends Controller
             $user->update(['is_blocked' => true]);
             try {
                 \Illuminate\Support\Facades\Mail::raw(
-                    "[🚨 ATTACK DETECTED]\n\nAI detected a brute-force attack (demo). Account has been locked.\nRisk score: 100",
-                    fn($m) => $m->to($user->email)->subject('🚨 Account Locked — AI Detected Attack')
+                    "🚨 SECURITY ALERT\n\nOur AI system detected a brute-force attack on your account. For your protection, the account has been locked immediately.\n\nRisk score: 100/100\n\nIf this was not you, please contact support.",
+                    fn($m) => $m->to($user->email)->subject('🚨 Security Alert — Account Locked by AI System')
                 );
             } catch (\Throwable) {}
             throw ValidationException::withMessages([
-                'email' => '🚨 [DEMO] AI detected brute-force attack — account has been locked.',
+                'email' => '🚨 AI detected a brute-force attack — your account has been locked for security. Contact support if this was not you.',
             ]);
         }
 
@@ -120,7 +120,18 @@ class AuthenticatedSessionController extends Controller
             'auth.demo_fake_ip'           => $request->input('demo_fake_ip', ''),
         ]);
 
-        app(OtpService::class)->send($user);
+        // Only send OTP if no valid one already exists.
+        // Prevents double-invalidation when the login form is submitted twice
+        // (back+resubmit, double-click): second send() would delete the first OTP,
+        // causing the user to get "invalid code" on their first (correct) attempt.
+        $hasValidOtp = \App\Models\OtpCode::where('user_id', $user->id)
+            ->whereNull('used_at')
+            ->where('expires_at', '>', now())
+            ->exists();
+
+        if (! $hasValidOtp) {
+            app(OtpService::class)->send($user);
+        }
 
         return redirect()->route('auth.otp')->with(
             'warning', "⚠️ Suspicious activity detected. Please verify with OTP sent to {$user->email}"

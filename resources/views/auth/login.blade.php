@@ -33,15 +33,19 @@
         .auth-feat-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
         .auth-feat-text{font-size:13px;font-weight:500;color:rgba(255,255,255,.75)}
         /* Right */
-        .auth-right{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 32px;overflow-y:auto;background:#fff;}
-        .auth-form-wrap{width:100%;max-width:420px}
-        .form-head{margin-bottom:32px}
-        .form-head h2{font-size:26px;font-weight:800;color:#0f172a;letter-spacing:-.5px;margin-bottom:6px}
-        .form-head p{font-size:14px;color:#64748b}
+        .auth-right{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 32px;overflow-y:auto;background:linear-gradient(160deg,#f8faff 0%,#f1f4ff 100%);}
+        .auth-form-wrap{width:100%;max-width:430px;background:#fff;border-radius:18px;padding:40px 38px;box-shadow:0 4px 6px -1px rgba(0,0,0,.05),0 12px 40px -8px rgba(99,102,241,.12);border:1px solid rgba(226,232,240,.8)}
+        .form-head{margin-bottom:28px}
+        .form-head h2{font-size:26px;font-weight:800;color:#0f172a;letter-spacing:-.5px;margin-bottom:5px}
+        .form-head p{font-size:13.5px;color:#64748b}
         /* Alerts */
-        .a-success{background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:20px;display:flex;align-items:center;gap:8px}
-        .a-error{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5;border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:20px}
-        .a-error ul{margin:6px 0 0 0;padding-left:18px}
+        .a-success{background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-left:4px solid #22c55e;border-radius:10px;padding:13px 16px;font-size:13px;font-weight:500;margin-bottom:20px;display:flex;align-items:center;gap:9px}
+        .a-error{background:#fff1f2;color:#be123c;border:1px solid #fecdd3;border-left:4px solid #f43f5e;border-radius:10px;padding:0;margin-bottom:20px;overflow:hidden}
+        .a-error-head{display:flex;align-items:center;gap:9px;padding:11px 15px;background:rgba(244,63,94,.07);border-bottom:1px solid #fecdd3;font-size:12.5px;font-weight:700;letter-spacing:.2px;color:#be123c}
+        .a-error-head i{font-size:14px;color:#f43f5e}
+        .a-error-body{padding:10px 15px 11px;font-size:13px;color:#9f1239}
+        .a-error-body ul{margin:3px 0 0 0;padding-left:16px;line-height:1.7}
+        .a-error-body li{list-style:disc}
         /* Fields */
         .field{margin-bottom:18px}
         .field label{display:block;font-size:12px;font-weight:600;color:#374151;text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px}
@@ -70,8 +74,9 @@
         .switch-link{text-align:center;font-size:13.5px;color:#64748b;margin-top:20px}
         .switch-link a{color:#6366f1;font-weight:700;text-decoration:none}
         .switch-link a:hover{text-decoration:underline}
-        .copy-note{text-align:center;font-size:11px;color:#cbd5e1;margin-top:28px;line-height:1.6}
-        @media(max-width:768px){.auth-left{display:none}.auth-right{padding:32px 20px}}
+        .copy-note{text-align:center;font-size:11px;color:#94a3b8;margin-top:20px;line-height:1.6;display:flex;align-items:center;justify-content:center;gap:5px}
+        .copy-note i{font-size:10px;color:#a5b4fc}
+        @media(max-width:768px){.auth-left{display:none}.auth-right{padding:24px 16px;background:#f1f4ff}.auth-form-wrap{padding:28px 22px;border-radius:14px}}
         /* Demo Panel */
         .demo-toggle{width:100%;margin-top:14px;padding:9px 13px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:500;color:#64748b;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .2s;font-family:'Inter',sans-serif;gap:8px}
         .demo-toggle:hover{background:#f1f5f9;color:#475569}
@@ -134,8 +139,8 @@
             @endif
             @if($errors->any())
                 <div class="a-error">
-                    <strong><i class="fas fa-exclamation-circle"></i> Please fix the following:</strong>
-                    <ul>@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+                    <div class="a-error-head"><i class="fas fa-shield-exclamation"></i> Security Notice</div>
+                    <div class="a-error-body"><ul>@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
                 </div>
             @endif
             <form class="login-form" action="{{ route('login') }}" method="POST">
@@ -182,11 +187,7 @@
                             <option value="brute">Brute-force attack — 12 failed attempts, 5 IPs</option>
                         </select>
                     </div>
-                    <div style="display:none"></div>
-                    <div class="demo-prediction pred-normal" id="demoPred">
-                        <i class="fas fa-check-circle"></i>
-                        <span id="demoPredText">Trusted context detected — signing in directly.</span>
-                    </div>
+                    <div style="display:none" id="demoPred"><span id="demoPredText"></span></div>
                 </div>
                 {{-- ══ END SCENARIO ══ --}}
 
@@ -202,7 +203,7 @@
                 </button>
             </form>
             <p class="switch-link">Don't have an account? <a href="{{ route('register') }}">Create one free</a></p>
-            <p class="copy-note">&copy; 2026 TechStore. Secured by AI-based 3FA anomaly detection.</p>
+            <p class="copy-note"><i class="fas fa-lock"></i> &copy; 2026 TechStore &mdash; Protected by AI-powered 3FA</p>
         </div>
     </div>
 </div>
@@ -252,13 +253,6 @@
         document.getElementById('demo_geo_changed').value=s.geo;
         document.getElementById('demo_ip_count').value=s.ip_count;
         document.getElementById('demo_fake_ip').value=s.fake_ip||'';
-        const pred=document.getElementById('demoPred');
-        const txt=document.getElementById('demoPredText');
-        pred.className='demo-prediction';
-        if(s.level==='attack') pred.classList.add('pred-attack');
-        else if(s.level==='otp') pred.classList.add('pred-otp');
-        else pred.classList.add('pred-normal');
-        txt.innerHTML=s.pred;
     }
 </script>
 </body>
