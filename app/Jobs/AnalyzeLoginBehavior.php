@@ -60,13 +60,17 @@ class AnalyzeLoginBehavior implements ShouldQueue
             ]);
 
             if ($response->successful()) {
-                $result = $response->json();
-                $this->applyVerdict(
-                    $result['result']     ?? 'normal',
-                    $result['risk_score'] ?? 0,
-                    $log,
-                    $user,
-                );
+                $result  = $response->json();
+                $verdict = $result['result'] ?? 'normal';
+
+                // Safety guard: AI may return 'attack' aggressively on few fails.
+                // Only allow account lock (attack) when rule-based threshold is met (≥10).
+                // Below that, downgrade to 'suspicious' — warn but never lock.
+                if ($verdict === 'attack' && $fails < 10) {
+                    $verdict = 'suspicious';
+                }
+
+                $this->applyVerdict($verdict, $result['risk_score'] ?? 0, $log, $user);
                 return;
             }
 
